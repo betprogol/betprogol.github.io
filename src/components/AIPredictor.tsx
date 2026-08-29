@@ -37,7 +37,7 @@ export const AIPredictor: React.FC<AIPredictorProps> = ({
   onAddSelection,
   activeSelections
 }) => {
-  const [selectedMatch, setSelectedMatch] = useState<Match>(initialMatch || matches[0]);
+  const [selectedMatch, setSelectedMatch] = useState<Match | undefined>(initialMatch || (matches && matches.length > 0 ? matches[0] : undefined));
   const [prediction, setPrediction] = useState<AIPredictionResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [customNote, setCustomNote] = useState('');
@@ -68,12 +68,15 @@ export const AIPredictor: React.FC<AIPredictorProps> = ({
   }, [selectedMatch]);
 
   const loadPrediction = async (m: Match) => {
+    if (!m) return;
     setLoading(true);
     try {
+      const homeName = m.homeTeam?.name || 'Ev Sahibi';
+      const awayName = m.awayTeam?.name || 'Deplasman';
       const res = await fetchAIMatchPrediction(
-        m.homeTeam.name,
-        m.awayTeam.name,
-        m.leagueName,
+        homeName,
+        awayName,
+        m.leagueName || 'Lig',
         m.date,
         m.odds,
         customNote,
@@ -100,11 +103,13 @@ export const AIPredictor: React.FC<AIPredictorProps> = ({
     setChatLoading(true);
 
     try {
+      const homeName = selectedMatch?.homeTeam?.name || 'Ev Sahibi';
+      const awayName = selectedMatch?.awayTeam?.name || 'Deplasman';
       const answer = await fetchAIScoutChat(text, {
-        homeTeam: selectedMatch.homeTeam.name,
-        awayTeam: selectedMatch.awayTeam.name,
-        league: selectedMatch.leagueName,
-        score: `${selectedMatch.homeScore ?? 0}-${selectedMatch.awayScore ?? 0}`
+        homeTeam: homeName,
+        awayTeam: awayName,
+        league: selectedMatch?.leagueName || 'Lig',
+        score: `${selectedMatch?.homeScore ?? 0}-${selectedMatch?.awayScore ?? 0}`
       });
 
       setChatMessages([
@@ -126,8 +131,8 @@ export const AIPredictor: React.FC<AIPredictorProps> = ({
     if (!selectedMatch) return;
     onAddSelection({
       matchId: selectedMatch.id,
-      homeTeam: selectedMatch.homeTeam.name,
-      awayTeam: selectedMatch.awayTeam.name,
+      homeTeam: selectedMatch.homeTeam?.name || 'Ev Sahibi',
+      awayTeam: selectedMatch.awayTeam?.name || 'Deplasman',
       matchDate: selectedMatch.date,
       matchTime: selectedMatch.time,
       leagueName: selectedMatch.leagueName,
@@ -260,11 +265,11 @@ export const AIPredictor: React.FC<AIPredictorProps> = ({
 
               <div className="space-y-2">
                 <div className="flex justify-between text-xs font-bold">
-                  <span className="text-green-400">%{prediction.winProbabilities.homeWin} {selectedMatch.homeTeam.name}</span>
+                  <span className="text-green-400">%{prediction.winProbabilities.homeWin} {selectedMatch?.homeTeam?.name || 'Ev Sahibi'}</span>
                   {prediction.winProbabilities.draw > 0 && (
                     <span className="text-gray-400">%{prediction.winProbabilities.draw} Beraberlik</span>
                   )}
-                  <span className="text-cyan-400">%{prediction.winProbabilities.awayWin} {selectedMatch.awayTeam.name}</span>
+                  <span className="text-cyan-400">%{prediction.winProbabilities.awayWin} {selectedMatch?.awayTeam?.name || 'Deplasman'}</span>
                 </div>
 
                 <div className="w-full h-3 bg-[#0D1117] rounded-full overflow-hidden flex">

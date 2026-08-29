@@ -36,20 +36,25 @@ export const LiveToastContainer: React.FC<{
   const [toasts, setToasts] = useState<ToastItem[]>([]);
 
   useEffect(() => {
+    const timeouts = new Map<string, any>();
+
     const handleNewToast = (item: ToastItem) => {
       setToasts(prev => [item, ...prev.slice(0, 4)]);
 
       // Auto remove after duration
       const timeout = setTimeout(() => {
         setToasts(prev => prev.filter(t => t.id !== item.id));
+        timeouts.delete(item.id);
       }, item.autoHideMs || 6500);
 
-      return () => clearTimeout(timeout);
+      timeouts.set(item.id, timeout);
     };
 
     listeners.add(handleNewToast);
     return () => {
       listeners.delete(handleNewToast);
+      timeouts.forEach(t => clearTimeout(t));
+      timeouts.clear();
     };
   }, []);
 

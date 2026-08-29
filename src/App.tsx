@@ -265,19 +265,22 @@ export default function App() {
             const shouldNotify = !prefs.notifyOnlyMySlipMatches || isMatchInUserSlip;
 
             if (shouldNotify && prefs.notifyGoals) {
+              const homeTeamName = sim.homeTeam?.name || m.homeTeam?.name || 'Ev Sahibi';
+              const awayTeamName = sim.awayTeam?.name || m.awayTeam?.name || 'Deplasman';
+
               if ((sim.homeScore ?? 0) > (m.homeScore ?? 0)) {
                 goalsToNotify.push({
-                  homeTeam: sim.homeTeam.name,
-                  awayTeam: sim.awayTeam.name,
-                  scoringTeam: sim.homeTeam.name,
+                  homeTeam: homeTeamName,
+                  awayTeam: awayTeamName,
+                  scoringTeam: homeTeamName,
                   minute: sim.minute || 45,
                   scoreStr: `${sim.homeScore} - ${sim.awayScore}`
                 });
               } else if ((sim.awayScore ?? 0) > (m.awayScore ?? 0)) {
                 goalsToNotify.push({
-                  homeTeam: sim.homeTeam.name,
-                  awayTeam: sim.awayTeam.name,
-                  scoringTeam: sim.awayTeam.name,
+                  homeTeam: homeTeamName,
+                  awayTeam: awayTeamName,
+                  scoringTeam: awayTeamName,
                   minute: sim.minute || 45,
                   scoreStr: `${sim.homeScore} - ${sim.awayScore}`
                 });

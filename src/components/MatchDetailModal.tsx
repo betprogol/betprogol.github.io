@@ -123,8 +123,8 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
     if (!odds || odds <= 1.0) return;
     onAddSelection({
       matchId: match.id,
-      homeTeam: match.homeTeam.name,
-      awayTeam: match.awayTeam.name,
+      homeTeam: match.homeTeam?.name || 'Ev Sahibi',
+      awayTeam: match.awayTeam?.name || 'Deplasman',
       matchDate: match.date,
       matchTime: match.time,
       leagueName: match.leagueName,
