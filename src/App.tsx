@@ -90,6 +90,9 @@ import {
   evaluateAllSlips, 
   simulateMatchStep 
 } from './utils/betEvaluator';
+import { 
+  MOCK_FIXTURES 
+} from './data/mockData';
 import {
   normalizeMatchTiming
 } from './utils/dateUtils';
@@ -115,7 +118,7 @@ export default function App() {
   const [activeSelections, setActiveSelections] = useState<BetSlipSelection[]>([]);
 
   // 3. Live Matches & Fixtures State (Always normalized to current TSİ time)
-  const [matches, setMatches] = useState<Match[]>([]);
+  const [matches, setMatches] = useState<Match[]>(() => MOCK_FIXTURES.map(normalizeMatchTiming));
 
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
 
