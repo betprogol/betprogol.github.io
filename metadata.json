@@ -1,0 +1,6 @@
+{
+  "name": "BETPROGOL - Bahis & Fikstür Tahmin Asistanı",
+  "description": "BETPROGOL - Gerçek zamanlı canlı skorlar, Trendyol Süper Lig ve dünya ligleri fikstürleri, yapay zeka destekli iddaa tahminleri, kupon takip sistemi ve detaylı analitik istatistik paneli.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

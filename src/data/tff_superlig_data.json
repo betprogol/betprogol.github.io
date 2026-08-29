@@ -1,0 +1,42 @@
+{
+  "league": {
+    "name": "Trendyol Süper Lig",
+    "season": "2024-2025 / 2025-2026",
+    "country": "Türkiye",
+    "logo": "🇹🇷",
+    "teamsCount": 19,
+    "totalWeeks": 38,
+    "lastUpdated": "2026-08-22T21:45:00+03:00",
+    "source": "TFF (Türkiye Futbol Federasyonu) Scraper API"
+  },
+  "teams": [
+    { "id": "tr-team-gs", "name": "Galatasaray", "shortName": "GS", "logo": "🦁", "stadium": "RAMS Park", "city": "İstanbul", "points": 64, "rank": 1, "played": 25, "won": 20, "drawn": 4, "lost": 1, "goalsFor": 62, "goalsAgainst": 21 },
+    { "id": "tr-team-fb", "name": "Fenerbahçe", "shortName": "FB", "logo": "🟡🔵", "stadium": "Ülker Stadyumu", "city": "İstanbul", "points": 61, "rank": 2, "played": 25, "won": 19, "drawn": 4, "lost": 2, "goalsFor": 60, "goalsAgainst": 22 },
+    { "id": "tr-team-bjk", "name": "Beşiktaş", "shortName": "BJK", "logo": "🦅", "stadium": "Tüpraş Stadyumu", "city": "İstanbul", "points": 50, "rank": 3, "played": 25, "won": 15, "drawn": 5, "lost": 5, "goalsFor": 48, "goalsAgainst": 26 },
+    { "id": "tr-team-ts", "name": "Trabzonspor", "shortName": "TS", "logo": "🔴🔵", "stadium": "Papara Park", "city": "Trabzon", "points": 44, "rank": 4, "played": 25, "won": 12, "drawn": 8, "lost": 5, "goalsFor": 41, "goalsAgainst": 28 },
+    { "id": "tr-team-basaksehir", "name": "Başakşehir", "shortName": "İBFK", "logo": "🟠🔵", "stadium": "Başakşehir Fatih Terim Stadyumu", "city": "İstanbul", "points": 41, "rank": 5, "played": 25, "won": 12, "drawn": 5, "lost": 8, "goalsFor": 39, "goalsAgainst": 32 },
+    { "id": "tr-team-samsun", "name": "Samsunspor", "shortName": "SAM", "logo": "🔴⚪", "stadium": "Samsun 19 Mayıs Stadyumu", "city": "Samsun", "points": 39, "rank": 6, "played": 25, "won": 11, "drawn": 6, "lost": 8, "goalsFor": 35, "goalsAgainst": 30 },
+    { "id": "tr-team-eyup", "name": "Eyüpspor", "shortName": "EYP", "logo": "🟣🟡", "stadium": "Recep Tayyip Erdoğan Stadyumu", "city": "İstanbul", "points": 36, "rank": 7, "played": 25, "won": 10, "drawn": 6, "lost": 9, "goalsFor": 33, "goalsAgainst": 31 },
+    { "id": "tr-team-goztepe", "name": "Göztepe", "shortName": "GÖZ", "logo": "🟡🔴", "stadium": "Gürsel Aksel Stadyumu", "city": "İzmir", "points": 34, "rank": 8, "played": 25, "won": 9, "drawn": 7, "lost": 9, "goalsFor": 32, "goalsAgainst": 33 },
+    { "id": "tr-team-sivas", "name": "Sivasspor", "shortName": "SİV", "logo": "🔴⚪", "stadium": "BG Grup 4 Eylül Stadyumu", "city": "Sivas", "points": 31, "rank": 9, "played": 25, "won": 8, "drawn": 7, "lost": 10, "goalsFor": 30, "goalsAgainst": 35 },
+    { "id": "tr-team-antalya", "name": "Antalyaspor", "shortName": "ANT", "logo": "🔴⚪", "stadium": "Corendon Airlines Park Antalya", "city": "Antalya", "points": 29, "rank": 10, "played": 25, "won": 8, "drawn": 5, "lost": 12, "goalsFor": 28, "goalsAgainst": 38 },
+    { "id": "tr-team-kasimpasa", "name": "Kasımpaşa", "shortName": "KAS", "logo": "🔵⚪", "stadium": "Recep Tayyip Erdoğan Stadyumu", "city": "İstanbul", "points": 28, "rank": 11, "played": 25, "won": 7, "drawn": 7, "lost": 11, "goalsFor": 31, "goalsAgainst": 40 },
+    { "id": "tr-team-rize", "name": "Çaykur Rizespor", "shortName": "RİZ", "logo": "🟢🔵", "stadium": "Çaykur Didi Stadyumu", "city": "Rize", "points": 27, "rank": 12, "played": 25, "won": 7, "drawn": 6, "lost": 12, "goalsFor": 26, "goalsAgainst": 37 },
+    { "id": "tr-team-konyaspor", "name": "Konyaspor", "shortName": "KON", "logo": "🟢⚪", "stadium": "MEDAŞ Konya Büyükşehir Stadyumu", "city": "Konya", "points": 25, "rank": 13, "played": 25, "won": 6, "drawn": 7, "lost": 12, "goalsFor": 24, "goalsAgainst": 36 },
+    { "id": "tr-team-alanyaspor", "name": "Alanyaspor", "shortName": "ALA", "logo": "🟠🟢", "stadium": "GAİN Park Stadyumu", "city": "Alanya", "points": 24, "rank": 14, "played": 25, "won": 5, "drawn": 9, "lost": 11, "goalsFor": 25, "goalsAgainst": 37 },
+    { "id": "tr-team-gaziantep", "name": "Gaziantep FK", "shortName": "GFK", "logo": "🔴⚫", "stadium": "Kalyon Stadyumu", "city": "Gaziantep", "points": 22, "rank": 15, "played": 25, "won": 5, "drawn": 7, "lost": 13, "goalsFor": 23, "goalsAgainst": 39 },
+    { "id": "tr-team-kayseri", "name": "Kayserispor", "shortName": "KAY", "logo": "🟡🔴", "stadium": "RHG Enertürk Enerji Stadyumu", "city": "Kayseri", "points": 20, "rank": 16, "played": 25, "won": 4, "drawn": 8, "lost": 13, "goalsFor": 21, "goalsAgainst": 41 },
+    { "id": "tr-team-bodrum", "name": "Bodrum FK", "shortName": "BOD", "logo": "🟢⚪", "stadium": "Bodrum İlçe Stadyumu", "city": "Muğla", "points": 19, "rank": 17, "played": 25, "won": 4, "drawn": 7, "lost": 14, "goalsFor": 18, "goalsAgainst": 38 },
+    { "id": "tr-team-hatay", "name": "Hatayspor", "shortName": "HAT", "logo": "🔴⚪", "stadium": "Mersin Stadyumu", "city": "Hatay", "points": 17, "rank": 18, "played": 25, "won": 3, "drawn": 8, "lost": 14, "goalsFor": 19, "goalsAgainst": 42 },
+    { "id": "tr-team-adana", "name": "Adana Demirspor", "shortName": "ADS", "logo": "🔵⚪", "stadium": "Yeni Adana Stadyumu", "city": "Adana", "points": 12, "rank": 19, "played": 25, "won": 2, "drawn": 6, "lost": 17, "goalsFor": 20, "goalsAgainst": 52 }
+  ],
+  "topScorers": [
+    { "rank": 1, "player": "Victor Osimhen", "team": "Galatasaray", "goals": 18, "assists": 4 },
+    { "rank": 2, "player": "Edin Dzeko", "team": "Fenerbahçe", "goals": 16, "assists": 5 },
+    { "rank": 3, "player": "Ciro Immobile", "team": "Beşiktaş", "goals": 14, "assists": 2 },
+    { "rank": 4, "player": "Youssef En-Nesyri", "team": "Fenerbahçe", "goals": 13, "assists": 3 },
+    { "rank": 5, "player": "Simon Banza", "team": "Trabzonspor", "goals": 12, "assists": 2 },
+    { "rank": 6, "player": "Krzysztof Piatek", "team": "Başakşehir", "goals": 11, "assists": 1 },
+    { "rank": 7, "player": "Barış Alper Yılmaz", "team": "Galatasaray", "goals": 10, "assists": 7 }
+  ]
+}
