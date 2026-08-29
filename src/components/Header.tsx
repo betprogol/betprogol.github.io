@@ -20,6 +20,7 @@ import {
 import { AppNotification, Match } from '../types/betting';
 import { UserProfile } from '../types/auth';
 import { BalanceDepositModal } from './BalanceDepositModal';
+import { formatMatchMinute } from '../utils/dateUtils';
 
 interface HeaderProps {
   darkMode: boolean;
@@ -108,7 +109,7 @@ export const Header: React.FC<HeaderProps> = ({
                     {m.sport === 'BASKETBALL' ? '🏀' : m.sport === 'VOLLEYBALL' ? '🏐' : m.sport === 'TENNIS' ? '🎾' : '⚽'}{' '}
                     {homeShort} {m.homeScore ?? 0}-{m.awayScore ?? 0} {awayShort}
                   </span>
-                  <span className="text-emerald-400 font-medium bg-green-950/60 px-1 rounded text-[10px]">({m.minute ? `${m.minute}'` : 'Canlı'})</span>
+                  <span className="text-emerald-400 font-medium bg-green-950/60 px-1 rounded text-[10px]">({formatMatchMinute(m.minute, m.status, m.sport)})</span>
                 </span>
               );
             })

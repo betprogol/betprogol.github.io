@@ -1,4 +1,5 @@
 import { Match, BetMarket } from '../types/betting';
+import { formatMatchMinute } from './dateUtils';
 
 export interface MarketState {
   market: BetMarket;
@@ -836,7 +837,8 @@ export function isMarketLiveActive(match: Match, market: BetMarket): boolean {
 
 export function formatMatchTimeDisplay(date: string, time: string, status?: string, minute?: number): string {
   if (status === 'LIVE') {
-    return minute ? `${minute}' Canlı` : 'Canlı';
+    const formatted = formatMatchMinute(minute, status);
+    return formatted ? `${formatted} Canlı` : 'Canlı';
   }
   if (status === 'FINISHED') {
     return 'MS';

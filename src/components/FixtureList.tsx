@@ -24,13 +24,17 @@ import {
   Share2,
   Lock,
   RotateCw,
-  Globe
+  Globe,
+  ChevronDown,
+  X,
+  Trophy
 } from 'lucide-react';
 import { Match, BetSlipSelection, SportType } from '../types/betting';
 import { TeamLogo } from './TeamLogo';
 import { LivePitchTracker } from './LivePitchTracker';
 import { TeamFormTrendsChart } from './TeamFormTrendsChart';
 import { isMarketLiveActive, formatMatchTimeDisplay } from '../utils/liveMarketLogic';
+import { formatMatchMinute } from '../utils/dateUtils';
 
 interface FixtureListProps {
   matches: Match[];
@@ -62,6 +66,8 @@ export const FixtureList: React.FC<FixtureListProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<'ALL' | 'LIVE' | 'TODAY' | 'AI_PICKS'>('ALL');
   const [selectedLeagueFilter, setSelectedLeagueFilter] = useState<string>('ALL');
+  const [isLeagueModalOpen, setIsLeagueModalOpen] = useState(false);
+  const [leagueSearchTerm, setLeagueSearchTerm] = useState('');
   const [expandedPitchMatchId, setExpandedPitchMatchId] = useState<string | null>(null);
   const [expandedTrendsMatchId, setExpandedTrendsMatchId] = useState<string | null>(null);
 
@@ -333,19 +339,132 @@ export const FixtureList: React.FC<FixtureListProps> = ({
 
           {/* Search Field & League Dropdown */}
           <div className="flex flex-col sm:flex-row items-center gap-2 w-full md:w-auto">
-            {/* League Dropdown */}
-            <select
-              value={selectedLeagueFilter}
-              onChange={e => setSelectedLeagueFilter(e.target.value)}
-              className="w-full sm:w-auto bg-[#161B22] border border-[#30363D] text-gray-300 text-xs rounded-md px-2.5 py-1.5 focus:outline-none focus:border-green-500 font-mono"
-            >
-              <option value="ALL">Tüm Ligler & Turnuvalar</option>
-              {leagues.map(l => (
-                <option key={l.id} value={l.id}>
-                  {l.name}
-                </option>
-              ))}
-            </select>
+            {/* Custom League Selector Dropdown */}
+            <div className="relative w-full sm:w-auto">
+              <button
+                type="button"
+                onClick={() => setIsLeagueModalOpen(!isLeagueModalOpen)}
+                className="w-full sm:w-auto bg-[#161B22] hover:bg-[#1C2128] border border-[#30363D] hover:border-green-500/50 text-gray-200 text-xs rounded-lg px-3 py-1.5 flex items-center justify-between gap-2 font-mono transition-all shadow-sm active:scale-95 cursor-pointer"
+              >
+                <div className="flex items-center gap-1.5 truncate max-w-[220px]">
+                  <Trophy className="w-3.5 h-3.5 text-green-400 shrink-0" />
+                  <span className="truncate">
+                    {selectedLeagueFilter === 'ALL'
+                      ? 'Tüm Ligler & Turnuvalar'
+                      : (leagues.find(l => l.id === selectedLeagueFilter)?.name || 'Tüm Ligler & Turnuvalar')}
+                  </span>
+                </div>
+                <ChevronDown className={`w-3.5 h-3.5 text-gray-400 shrink-0 transition-transform ${isLeagueModalOpen ? 'rotate-180 text-green-400' : ''}`} />
+              </button>
+
+              {/* Custom Dark League Selection Dropdown / Modal */}
+              {isLeagueModalOpen && (
+                <>
+                  {/* Backdrop */}
+                  <div 
+                    className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs sm:bg-transparent"
+                    onClick={() => setIsLeagueModalOpen(false)}
+                  />
+
+                  {/* Dropdown Menu */}
+                  <div className="fixed sm:absolute left-4 right-4 sm:left-0 sm:right-auto top-1/2 sm:top-full mt-1.5 -translate-y-1/2 sm:translate-y-0 w-auto sm:w-80 max-h-[85vh] sm:max-h-80 bg-[#161B22] border border-[#30363D] rounded-xl shadow-2xl z-50 overflow-hidden flex flex-col p-2.5 space-y-2.5 animate-in fade-in zoom-in-95 duration-150 font-mono">
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-1 pb-1 border-b border-[#30363D]">
+                      <div className="flex items-center gap-2 text-xs font-bold text-white">
+                        <Trophy className="w-4 h-4 text-green-400" />
+                        <span>Lig & Turnuva Seç</span>
+                      </div>
+                      <button 
+                        onClick={() => setIsLeagueModalOpen(false)}
+                        className="p-1 rounded-md text-gray-400 hover:text-white hover:bg-[#21262D]"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {/* League Search Box */}
+                    <div className="relative">
+                      <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-2.5" />
+                      <input
+                        type="text"
+                        placeholder="Lig adı ile filtrele..."
+                        value={leagueSearchTerm}
+                        onChange={e => setLeagueSearchTerm(e.target.value)}
+                        className="w-full bg-[#0D1117] border border-[#30363D] rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-green-500"
+                      />
+                    </div>
+
+                    {/* League Options List */}
+                    <div className="overflow-y-auto custom-scrollbar space-y-1 max-h-60 pr-1">
+                      {/* Option ALL */}
+                      <button
+                        onClick={() => {
+                          setSelectedLeagueFilter('ALL');
+                          setIsLeagueModalOpen(false);
+                          setLeagueSearchTerm('');
+                        }}
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs transition-colors cursor-pointer text-left ${
+                          selectedLeagueFilter === 'ALL'
+                            ? 'bg-green-500/15 text-green-400 font-bold border border-green-500/30'
+                            : 'text-gray-300 hover:bg-[#21262D]'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <Globe className="w-4 h-4 text-cyan-400 shrink-0" />
+                          <span className="truncate">Tüm Ligler & Turnuvalar</span>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#0D1117] text-gray-400">
+                            {matches.length} Maç
+                          </span>
+                          {selectedLeagueFilter === 'ALL' && <Check className="w-4 h-4 text-green-400 shrink-0" />}
+                        </div>
+                      </button>
+
+                      {/* Filtered League Options */}
+                      {leagues
+                        .filter(l => l.name.toLowerCase().includes(leagueSearchTerm.toLowerCase()))
+                        .map(l => {
+                          const isSelected = selectedLeagueFilter === l.id;
+                          const leagueMatchCount = matches.filter(m => m.leagueId === l.id || m.leagueName === l.name).length;
+                          return (
+                            <button
+                              key={l.id}
+                              onClick={() => {
+                                setSelectedLeagueFilter(l.id);
+                                setIsLeagueModalOpen(false);
+                                setLeagueSearchTerm('');
+                              }}
+                              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs transition-colors cursor-pointer text-left ${
+                                isSelected
+                                  ? 'bg-green-500/15 text-green-400 font-bold border border-green-500/30'
+                                  : 'text-gray-300 hover:bg-[#21262D]'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2 truncate">
+                                {l.logo ? (
+                                  <img src={l.logo} alt="" className="w-4 h-4 object-contain shrink-0" />
+                                ) : (
+                                  <Trophy className="w-4 h-4 text-amber-400 shrink-0" />
+                                )}
+                                <span className="truncate">{l.name}</span>
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0">
+                                {leagueMatchCount > 0 && (
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#0D1117] text-gray-400">
+                                    {leagueMatchCount}
+                                  </span>
+                                )}
+                                {isSelected && <Check className="w-4 h-4 text-green-400 shrink-0" />}
+                              </div>
+                            </button>
+                          );
+                        })}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
 
             {/* Search Input & Refresh Button */}
             <div className="flex items-center gap-1.5 w-full sm:w-auto">
@@ -480,7 +599,7 @@ export const FixtureList: React.FC<FixtureListProps> = ({
                     {isLive ? (
                       <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/40 text-[10px] font-bold animate-pulse">
                         <Radio className="w-3 h-3" />
-                        <span>CANLI {match.minute ? `${match.minute}'` : ''}</span>
+                        <span>CANLI {formatMatchMinute(match.minute, match.status, match.sport)}</span>
                       </span>
                     ) : match.status === 'FINISHED' ? (
                       <span className="text-[10px] px-2 py-0.5 rounded bg-gray-800 text-gray-400 font-bold">

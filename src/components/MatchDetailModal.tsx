@@ -20,6 +20,7 @@ import {
   Award
 } from 'lucide-react';
 import { Match, BetSlipSelection, SportType } from '../types/betting';
+import { formatMatchMinute } from '../utils/dateUtils';
 import { TeamLogo } from './TeamLogo';
 import { LivePitchTracker } from './LivePitchTracker';
 import { LiveMomentumVisualizer } from './LiveMomentumVisualizer';
@@ -166,7 +167,7 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
                 {isLive && (
                   <span className="px-1.5 py-0.2 rounded bg-red-500/20 text-red-400 border border-red-500/40 text-[9px] sm:text-[10px] font-bold animate-pulse flex items-center gap-1 shrink-0">
                     <Radio className="w-2.5 h-2.5" />
-                    CANLI {match.minute ? `${match.minute}'` : ''}
+                    CANLI {formatMatchMinute(match.minute, match.status, match.sport)}
                   </span>
                 )}
               </div>
@@ -230,7 +231,7 @@ export const MatchDetailModal: React.FC<MatchDetailModalProps> = ({
             {isLive ? (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/40 text-[10px] sm:text-xs font-black tracking-wider uppercase animate-pulse">
                 <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                <span>CANLI ({match.minute ? `${match.minute}'` : 'Oynanıyor'})</span>
+                <span>CANLI ({formatMatchMinute(match.minute, match.status, match.sport)})</span>
               </span>
             ) : match.status === 'FINISHED' ? (
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] sm:text-xs font-extrabold tracking-wider uppercase">
