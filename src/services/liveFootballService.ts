@@ -32,8 +32,58 @@ export interface H2HResponse {
 }
 
 export function mergeLiveWithMasterFixtures(liveMatches: Match[]): Match[] {
-  // Return the pure real-time matches without mock pollution
-  return liveMatches;
+  if (!liveMatches || liveMatches.length === 0) {
+    return MOCK_FIXTURES;
+  }
+
+  const clean = (str: string) => (str || '').toLowerCase().replace(/[^a-z0-9]/gi, '').trim();
+
+  const matchedLiveIds = new Set<string>();
+
+  const merged = MOCK_FIXTURES.map(master => {
+    const masterHome = clean(master.homeTeam.name);
+    const masterAway = clean(master.awayTeam.name);
+
+    if (!masterHome || !masterAway) return master;
+
+    const liveMatch = liveMatches.find(lm => {
+      const liveHome = clean(lm.homeTeam.name);
+      const liveAway = clean(lm.awayTeam.name);
+
+      if (!liveHome || !liveAway) return false;
+
+      const homeMatch = liveHome.includes(masterHome.substring(0, 4)) || masterHome.includes(liveHome.substring(0, 4));
+      const awayMatch = liveAway.includes(masterAway.substring(0, 4)) || masterAway.includes(liveAway.substring(0, 4));
+
+      return homeMatch && awayMatch;
+    });
+
+    if (liveMatch) {
+      matchedLiveIds.add(liveMatch.id);
+      return {
+        ...master,
+        status: liveMatch.status,
+        minute: liveMatch.minute ?? master.minute,
+        homeScore: liveMatch.homeScore !== undefined ? liveMatch.homeScore : master.homeScore,
+        awayScore: liveMatch.awayScore !== undefined ? liveMatch.awayScore : master.awayScore,
+        halftimeScore: liveMatch.halftimeScore || master.halftimeScore,
+        odds: { ...master.odds, ...liveMatch.odds },
+        stats: liveMatch.stats || master.stats,
+        hasLiveBet: true
+      };
+    }
+
+    return master;
+  });
+
+  // Append any extra live matches that weren't part of master fixtures
+  liveMatches.forEach(lm => {
+    if (!matchedLiveIds.has(lm.id)) {
+      merged.push(lm);
+    }
+  });
+
+  return merged;
 }
 
 /**
@@ -160,29 +210,31 @@ export async function fetchLiveMatchesFromWeb(
         stats: m.stats
       }));
 
+      const mergedMatches = mergeLiveWithMasterFixtures(formattedMatches);
       return {
-        matches: formattedMatches.map(normalizeMatchTiming),
+        matches: mergedMatches.map(normalizeMatchTiming),
         sources: data.sources && data.sources.length > 0 ? data.sources : [
           { title: 'ESPN Scoreboards Global Data', uri: 'https://site.api.espn.com' },
           { title: 'TheSportsDB Multi-Sport Live', uri: 'https://www.thesportsdb.com' },
           { title: 'Football-Data.org Resmi Fikstür', uri: 'https://www.football-data.org' }
         ],
         timestamp: data.timestamp || new Date().toISOString(),
-        sourceCount: formattedMatches.length
+        sourceCount: mergedMatches.length
       };
     }
 
+    const fallback = mergeLiveWithMasterFixtures([]);
     return {
-      matches: [],
-      sources: data.sources || [{ title: 'ESPN Scoreboards Canlı Skor & Bülten', uri: 'https://site.api.espn.com' }],
+      matches: fallback.map(normalizeMatchTiming),
+      sources: data.sources || [{ title: 'BETPROGOL Resmi Fikstür Veritabanı', uri: 'https://betprogol.local' }],
       timestamp: new Date().toISOString(),
-      sourceCount: 0
+      sourceCount: fallback.length
     };
   } catch (err) {
     console.warn('Backend API proxy error, falling back to direct client scoreboard fetch:', err);
     try {
       const clientMatches = await fetchDirectClientSideMatches(date, sport);
-      const matchesToReturn = clientMatches.length > 0 ? clientMatches : MOCK_FIXTURES;
+      const matchesToReturn = mergeLiveWithMasterFixtures(clientMatches);
       return {
         matches: matchesToReturn.map(normalizeMatchTiming),
         sources: [
