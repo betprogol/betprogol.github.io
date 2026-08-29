@@ -275,14 +275,27 @@ async function fetchDirectClientSideMatches(date?: string, sport?: string): Prom
     { code: 'eng.1', leagueId: 'eng-premier', leagueName: 'Premier League', country: 'İngiltere', logo: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', isTurk: false },
     { code: 'eng.2', leagueId: 'eng-championship', leagueName: 'Championship', country: 'İngiltere', logo: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', isTurk: false },
     { code: 'esp.1', leagueId: 'esp-laliga', leagueName: 'La Liga', country: 'İspanya', logo: '🇪🇸', isTurk: false },
-    { code: 'ger.1', leagueId: 'ger-bundesliga', leagueName: 'Bundesliga', country: 'Almanya', logo: '🇩🇪', isTurk: false },
+    { code: 'esp.2', leagueId: 'esp-segunda', leagueName: 'La Liga 2', country: 'İspanya', logo: '🇪🇸', isTurk: false },
     { code: 'ita.1', leagueId: 'ita-seriea', leagueName: 'Serie A', country: 'İtalya', logo: '🇮🇹', isTurk: false },
+    { code: 'ita.2', leagueId: 'ita-serieb', leagueName: 'Serie B', country: 'İtalya', logo: '🇮🇹', isTurk: false },
+    { code: 'ger.1', leagueId: 'ger-bundesliga', leagueName: 'Bundesliga', country: 'Almanya', logo: '🇩🇪', isTurk: false },
+    { code: 'ger.2', leagueId: 'ger-2bundesliga', leagueName: '2. Bundesliga', country: 'Almanya', logo: '🇩🇪', isTurk: false },
     { code: 'fra.1', leagueId: 'fra-ligue1', leagueName: 'Ligue 1', country: 'Fransa', logo: '🇫🇷', isTurk: false },
-    { code: 'por.1', leagueId: 'por.1', leagueName: 'Liga Portugal', country: 'Portekiz', logo: '🇵🇹', isTurk: false },
-    { code: 'ned.1', leagueId: 'ned.1', leagueName: 'Eredivisie', country: 'Hollanda', logo: '🇳🇱', isTurk: false },
+    { code: 'fra.2', leagueId: 'fra-ligue2', leagueName: 'Ligue 2', country: 'Fransa', logo: '🇫🇷', isTurk: false },
+    { code: 'por.1', leagueId: 'por-primeira', leagueName: 'Liga Portugal', country: 'Portekiz', logo: '🇵🇹', isTurk: false },
+    { code: 'ned.1', leagueId: 'ned-eredivisie', leagueName: 'Eredivisie', country: 'Hollanda', logo: '🇳🇱', isTurk: false },
+    { code: 'bel.1', leagueId: 'bel-pro', leagueName: 'Belçika Pro League', country: 'Belçika', logo: '🇧🇪', isTurk: false },
+    { code: 'sco.1', leagueId: 'sco-prem', leagueName: 'İskoçya Premiership', country: 'İskoçya', logo: '🏴󠁧󠁢󠁳󠁣󠁴󠁿', isTurk: false },
+    { code: 'gre.1', leagueId: 'gre-super', leagueName: 'Yunanistan Süper Ligi', country: 'Yunanistan', logo: '🇬🇷', isTurk: false },
     { code: 'uefa.champions', leagueId: 'uefa-cl', leagueName: 'UEFA Şampiyonlar Ligi', country: 'Avrupa', logo: '🏆', isTurk: false },
-    { code: 'uefa.europa', leagueId: 'uefa-el', leagueName: 'UEFA Avrupa Ligi', country: 'Avrupa', logo: '⚽', isTurk: false },
-    { code: 'all', leagueId: 'global-soccer', leagueName: 'Dünya Ligleri', country: 'Uluslararası', logo: '🌐', isTurk: false }
+    { code: 'uefa.europa', leagueId: 'uefa-el', leagueName: 'UEFA Avrupa Ligi', country: 'Avrupa', logo: '🏆', isTurk: false },
+    { code: 'uefa.europa.conf', leagueId: 'uefa-ecl', leagueName: 'UEFA Konferans Ligi', country: 'Avrupa', logo: '🏆', isTurk: false },
+    { code: 'sau.1', leagueId: 'sau-pro', leagueName: 'Suudi Pro Lig', country: 'Suudi Arabistan', logo: '🇸🇦', isTurk: false },
+    { code: 'bra.1', leagueId: 'bra-seriea', leagueName: 'Brezilya Serie A', country: 'Brezilya', logo: '🇧🇷', isTurk: false },
+    { code: 'arg.1', leagueId: 'arg-primera', leagueName: 'Arjantin Primera', country: 'Arjantin', logo: '🇦🇷', isTurk: false },
+    { code: 'usa.1', leagueId: 'usa-mls', leagueName: 'MLS', country: 'ABD', logo: '🇺🇸', isTurk: false },
+    { code: 'mex.1', leagueId: 'mex-ligamx', leagueName: 'Liga MX', country: 'Meksika', logo: '🇲🇽', isTurk: false },
+    { code: 'all', leagueId: 'global-soccer', leagueName: 'Dünya Ligleri & Uluslararası', country: 'Uluslararası', logo: '🌐', isTurk: false }
   ];
 
   // 1. Fetch ESPN endpoints in parallel with anti-cache headers

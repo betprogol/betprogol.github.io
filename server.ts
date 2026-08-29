@@ -424,16 +424,20 @@ Kullanıcıya Türkçe, net, profesyonel, veri odaklı ve samimi bir dille cevap
     const addedKeys = new Set<string>();
 
     try {
-      // 1. Define all supported real leagues for Soccer and Basketball
+      // 1. Define all supported real leagues for LiveScore & ESPN Global feeds
       const SOCCER_LEAGUES = [
         { code: 'tur.1', leagueId: 'tr-superlig', leagueName: 'Trendyol Süper Lig', country: 'Türkiye', logo: '🇹🇷', tv: 'beIN Sports 1 HD' },
         { code: 'tur.2', leagueId: 'tr-1lig', leagueName: 'Trendyol 1. Lig', country: 'Türkiye', logo: '🇹🇷', tv: 'TRT Spor / beIN MAX' },
         { code: 'eng.1', leagueId: 'eng-premier', leagueName: 'Premier League', country: 'İngiltere', logo: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', tv: 'beIN Sports 3 HD' },
         { code: 'eng.2', leagueId: 'eng-championship', leagueName: 'Championship', country: 'İngiltere', logo: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', tv: 'beIN Sports 4 HD' },
         { code: 'esp.1', leagueId: 'esp-laliga', leagueName: 'La Liga', country: 'İspanya', logo: '🇪🇸', tv: 'S Sport / S Sport Plus' },
+        { code: 'esp.2', leagueId: 'esp-segunda', leagueName: 'La Liga 2', country: 'İspanya', logo: '🇪🇸', tv: 'S Sport Plus' },
         { code: 'ita.1', leagueId: 'ita-seriea', leagueName: 'Serie A', country: 'İtalya', logo: '🇮🇹', tv: 'S Sport 2 / S Sport Plus' },
+        { code: 'ita.2', leagueId: 'ita-serieb', leagueName: 'Serie B', country: 'İtalya', logo: '🇮🇹', tv: 'S Sport Plus' },
         { code: 'ger.1', leagueId: 'ger-bundesliga', leagueName: 'Bundesliga', country: 'Almanya', logo: '🇩🇪', tv: 'Tivibu Spor / beIN' },
+        { code: 'ger.2', leagueId: 'ger-2bundesliga', leagueName: '2. Bundesliga', country: 'Almanya', logo: '🇩🇪', tv: 'Tivibu Spor' },
         { code: 'fra.1', leagueId: 'fra-ligue1', leagueName: 'Ligue 1', country: 'Fransa', logo: '🇫🇷', tv: 'beIN Sports 4 HD' },
+        { code: 'fra.2', leagueId: 'fra-ligue2', leagueName: 'Ligue 2', country: 'Fransa', logo: '🇫🇷', tv: 'beIN Sports' },
         { code: 'ned.1', leagueId: 'ned-eredivisie', leagueName: 'Eredivisie', country: 'Hollanda', logo: '🇳🇱', tv: 'TV8.5 / Exxen' },
         { code: 'por.1', leagueId: 'por-primeira', leagueName: 'Liga Portugal', country: 'Portekiz', logo: '🇵🇹', tv: 'S Sport Plus' },
         { code: 'bel.1', leagueId: 'bel-pro', leagueName: 'Belçika Pro League', country: 'Belçika', logo: '🇧🇪', tv: 'S Sport Plus' },
@@ -445,12 +449,15 @@ Kullanıcıya Türkçe, net, profesyonel, veri odaklı ve samimi bir dille cevap
         { code: 'sau.1', leagueId: 'sau-pro', leagueName: 'Suudi Pro Lig', country: 'Suudi Arabistan', logo: '🇸🇦', tv: 'TV8.5' },
         { code: 'bra.1', leagueId: 'bra-seriea', leagueName: 'Brezilya Serie A', country: 'Brezilya', logo: '🇧🇷', tv: 'Spor Smart' },
         { code: 'arg.1', leagueId: 'arg-primera', leagueName: 'Arjantin Primera', country: 'Arjantin', logo: '🇦🇷', tv: 'Spor Smart' },
-        { code: 'all', leagueId: 'global-soccer', leagueName: 'Dünya Ligleri & Uluslararası', country: 'Uluslararası', logo: '🌐', tv: 'Canlı Yayın / Spor TV' }
+        { code: 'usa.1', leagueId: 'usa-mls', leagueName: 'MLS', country: 'ABD', logo: '🇺🇸', tv: 'Apple TV' },
+        { code: 'mex.1', leagueId: 'mex-ligamx', leagueName: 'Liga MX', country: 'Meksika', logo: '🇲🇽', tv: 'Spor Smart' },
+        { code: 'all', leagueId: 'global-soccer', leagueName: 'Dünya Ligleri & Uluslararası', country: 'Uluslararası', logo: '🌐', tv: 'LiveScore / Canlı Yayın' }
       ];
 
       const BASKET_LEAGUES = [
         { code: 'nba', leagueId: 'nba', leagueName: 'NBA', country: 'ABD', logo: '🏀', tv: 'S Sport / NBA TV' },
-        { code: 'mens-college-basketball', leagueId: 'ncaa', leagueName: 'NCAA Basketball', country: 'ABD', logo: '🏀', tv: 'S Sport Plus' }
+        { code: 'mens-college-basketball', leagueId: 'ncaa', leagueName: 'NCAA Basketball', country: 'ABD', logo: '🏀', tv: 'S Sport Plus' },
+        { code: 'wnba', leagueId: 'wnba', leagueName: 'WNBA', country: 'ABD', logo: '🏀', tv: 'S Sport Plus' }
       ];
 
       // Fetch Soccer Scoreboards from ESPN in parallel
