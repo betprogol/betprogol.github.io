@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BETPROGOL</title>
+    <script>
+      // Single Page App redirect for GitHub Pages
+      var pathSegments = window.location.pathname.split('/').filter(Boolean);
+      var isRepoPath = pathSegments.length > 0 && !pathSegments[0].includes('.');
+      var target = window.location.origin + '/' + (isRepoPath ? pathSegments[0] + '/' : '');
+      window.location.replace(target);
+    </script>
+  </head>
+  <body style="background-color: #0D1117; color: white; display: flex; align-items: center; justify-content: center; height: 100vh; font-family: sans-serif;">
+    <div style="text-align: center;">
+      <h2>BETPROGOL Yönlendiriliyor...</h2>
+      <p style="color: #9CA3AF;">Lütfen bekleyiniz...</p>
+    </div>
+  </body>
+</html>
