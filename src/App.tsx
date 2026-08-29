@@ -185,7 +185,7 @@ export default function App() {
     const dateToQuery = customDate || selectedDate;
     try {
       const res = await fetchLiveMatchesFromWeb('all', dateToQuery, undefined, 'ALL', selectedSport, undefined, forceRefresh);
-      if (res.matches && Array.isArray(res.matches)) {
+      if (res.matches && Array.isArray(res.matches) && res.matches.length > 0) {
         setMatches(prevMatches => {
           const prevMap = new Map<string, Match>(prevMatches.map(m => [m.id, m]));
           return res.matches.map(newMatch => {
