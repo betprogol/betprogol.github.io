@@ -1,6 +1,6 @@
 import { Match, H2HRecord, ApiProviderType, SportType } from '../types/betting';
 import { MOCK_FIXTURES } from '../data/mockData';
-import { normalizeMatchTiming } from '../utils/dateUtils';
+import { normalizeMatchTiming, parseClockStringToMinute } from '../utils/dateUtils';
 
 export interface LiveFeedResponse {
   matches: Match[];

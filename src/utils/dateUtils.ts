@@ -268,6 +268,112 @@ export function getMatchTimingInfo(
 }
 
 /**
+ * Parses raw clock strings from sports feeds (e.g., ESPN, API-Football)
+ * Handles stoppage time (45+1, 90+2, 45'+2', etc.) and avoids corrupted concatenations.
+ */
+export function parseClockStringToMinute(clockStr?: string): { minute: number; displayClock: string } {
+  if (!clockStr) return { minute: 1, displayClock: "1'" };
+  const str = String(clockStr).trim();
+
+  // Pattern: "45+2", "45'+2'", "90+4", "45 + 1", "90+3:15"
+  const stoppageMatch = str.match(/^(\d{1,2})['\s]*\+(\d{1,2})/);
+  if (stoppageMatch) {
+    const base = parseInt(stoppageMatch[1], 10);
+    const added = parseInt(stoppageMatch[2], 10);
+    return {
+      minute: base + added,
+      displayClock: `${base}+${added}'`
+    };
+  }
+
+  // Corrupted strings from naive regex replacements: "401" -> 45+1, "451" -> 45+1, "902" -> 90+2
+  if (/^40[1-9]$/.test(str)) {
+    const added = parseInt(str.slice(2), 10);
+    return { minute: 45 + added, displayClock: `45+${added}'` };
+  }
+  if (/^45[1-9]$/.test(str)) {
+    const added = parseInt(str.slice(2), 10);
+    return { minute: 45 + added, displayClock: `45+${added}'` };
+  }
+  if (/^90[1-9]$/.test(str)) {
+    const added = parseInt(str.slice(2), 10);
+    return { minute: 90 + added, displayClock: `90+${added}'` };
+  }
+
+  // Standard numeric or mm:ss clock
+  const numMatch = str.match(/^(\d{1,3})/);
+  if (numMatch) {
+    const num = parseInt(numMatch[1], 10);
+    if (num >= 901 && num <= 920) {
+      const added = num - 900;
+      return { minute: 90 + added, displayClock: `90+${added}'` };
+    }
+    if (num >= 401 && num <= 415) {
+      const added = num - 400;
+      return { minute: 45 + added, displayClock: `45+${added}'` };
+    }
+    if (num >= 451 && num <= 465) {
+      const added = num - 450;
+      return { minute: 45 + added, displayClock: `45+${added}'` };
+    }
+    if (num > 90) {
+      return { minute: num, displayClock: `90+${num - 90}'` };
+    }
+    return { minute: num, displayClock: `${num}'` };
+  }
+
+  return { minute: 45, displayClock: "45'" };
+}
+
+/**
+ * Formats match minute for clean display across all UI components.
+ * Specifically ensures stoppage time displays as 45+1', 90+2' instead of 401, 902, 451.
+ */
+export function formatMatchMinute(
+  minute?: number | string,
+  status?: string,
+  sport?: string
+): string {
+  if (status === 'FINISHED') return 'MS';
+  if (status === 'NOT_STARTED') return '';
+  if (minute === undefined || minute === null || minute === '') return 'Canlı';
+
+  const str = String(minute).trim();
+
+  // If already formatted with stoppage time e.g. "45+1", "90+2", "45+2'"
+  if (str.includes('+')) {
+    const clean = str.replace(/['"]+/g, '');
+    return `${clean}'`;
+  }
+
+  const num = parseInt(str, 10);
+  if (isNaN(num)) return str;
+
+  // Handle corrupted concatenated values (e.g. 902 -> 90+2, 401 -> 45+1, 451 -> 45+1)
+  if (num >= 901 && num <= 925) {
+    return `90+${num - 900}'`;
+  }
+  if (num >= 451 && num <= 465) {
+    return `45+${num - 450}'`;
+  }
+  if (num >= 401 && num <= 415) {
+    return `45+${num - 400}'`;
+  }
+
+  // Football / Soccer stoppage time logic
+  if (sport === 'FOOTBALL' || !sport || sport === 'SOCCER') {
+    if (num > 90 && num < 120) {
+      return `90+${num - 90}'`;
+    }
+    if (num > 120) {
+      return `120+${num - 120}'`;
+    }
+  }
+
+  return `${num}'`;
+}
+
+/**
  * Normalizes a match object to guarantee status (NOT_STARTED, LIVE, FINISHED), minute, and scores
  * stay strictly faithful to real-world data without fabricating fake live matches.
  */
@@ -323,4 +429,6 @@ export function normalizeMatchTiming<T extends {
     awayScore: undefined
   };
 }
+
+
 

@@ -492,11 +492,31 @@ Kullanıcıya Türkçe, net, profesyonel, veri odaklı ve samimi bir dille cevap
               if (state === 'in') status = 'LIVE';
               else if (state === 'post') status = 'FINISHED';
 
-              // Extract minute
+              // Extract minute safely handling stoppage time (+1, +2 etc)
               let minute: number | undefined = undefined;
               if (status === 'LIVE') {
-                const clockStr = comp.status?.displayClock || '1';
-                minute = parseInt(clockStr.replace(/[^0-9]/g, ''), 10) || 1;
+                const clockStr = String(comp.status?.displayClock || '1').trim();
+                const stoppageMatch = clockStr.match(/^(\d{1,2})['\s]*\+(\d{1,2})/);
+                if (stoppageMatch) {
+                  minute = parseInt(stoppageMatch[1], 10) + parseInt(stoppageMatch[2], 10);
+                } else if (/^40[1-9]$/.test(clockStr)) {
+                  minute = 45 + parseInt(clockStr.slice(2), 10);
+                } else if (/^45[1-9]$/.test(clockStr)) {
+                  minute = 45 + parseInt(clockStr.slice(2), 10);
+                } else if (/^90[1-9]$/.test(clockStr)) {
+                  minute = 90 + parseInt(clockStr.slice(2), 10);
+                } else {
+                  const mMatch = clockStr.match(/^(\d{1,3})/);
+                  if (mMatch) {
+                    const rawNum = parseInt(mMatch[1], 10);
+                    if (rawNum >= 901 && rawNum <= 920) minute = 90 + (rawNum - 900);
+                    else if (rawNum >= 401 && rawNum <= 415) minute = 45 + (rawNum - 400);
+                    else if (rawNum >= 451 && rawNum <= 465) minute = 45 + (rawNum - 450);
+                    else minute = rawNum;
+                  } else {
+                    minute = 1;
+                  }
+                }
               }
 
               // Extract scores
