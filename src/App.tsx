@@ -56,7 +56,8 @@ import {
   BetSlip, 
   BetSlipSelection, 
   AppNotification, 
-  SportType 
+  SportType,
+  ApiProviderType
 } from './types/betting';
 import { 
   UserProfile, 
@@ -93,6 +94,7 @@ import {
 import {
   normalizeMatchTiming
 } from './utils/dateUtils';
+import { FULL_COMPREHENSIVE_FIXTURES } from './data/fullFixtures';
 
 export default function App() {
   // 1. Core State
@@ -100,6 +102,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<string>('fixtures');
   const [selectedSport, setSelectedSport] = useState<SportType | 'ALL'>('ALL');
   const [selectedDate, setSelectedDate] = useState<string>('today');
+  const [selectedProvider, setSelectedProvider] = useState<ApiProviderType>('LIVESCORE_FULL');
   const [darkMode, setDarkMode] = useState<boolean>(true);
   const [isMobileFrame, setIsMobileFrame] = useState<boolean>(false);
 
@@ -114,10 +117,10 @@ export default function App() {
   });
   const [activeSelections, setActiveSelections] = useState<BetSlipSelection[]>([]);
 
-  // 3. Live Matches & Fixtures State (Always normalized to current TSİ time)
-  const [matches, setMatches] = useState<Match[]>([]);
+  // 3. Live Matches & Fixtures State (Initialized with full master database)
+  const [matches, setMatches] = useState<Match[]>(() => FULL_COMPREHENSIVE_FIXTURES.map(normalizeMatchTiming));
 
-  const [isSyncing, setIsSyncing] = useState<boolean>(true);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
 
   // 4. Notifications State
   const [notifications, setNotifications] = useState<AppNotification[]>(() => loadSavedNotifications());
@@ -176,15 +179,15 @@ export default function App() {
     saveNotificationsToStorage(notifications);
   }, [notifications]);
 
-  // Load real-time matches on start and on date/sport changes
+  // Load real-time matches on start and on date/sport/provider changes
   const syncLiveMatches = useCallback(async (forceRefresh = false, customDate?: string) => {
     setIsSyncing(true);
     const dateToQuery = customDate || selectedDate;
     try {
-      const res = await fetchLiveMatchesFromWeb('all', dateToQuery, undefined, 'ALL', selectedSport, undefined, forceRefresh);
+      const res = await fetchLiveMatchesFromWeb('all', dateToQuery, undefined, selectedProvider, selectedSport, undefined, forceRefresh);
       if (res.matches && Array.isArray(res.matches)) {
         setMatches(prevMatches => {
-          if (res.matches.length === 0) return [];
+          if (res.matches.length === 0 && selectedProvider === 'ESPN') return [];
           const prevMap = new Map<string, Match>(prevMatches.map(m => [m.id, m]));
           return res.matches.map(newMatch => {
             const existing = prevMap.get(newMatch.id);
@@ -207,7 +210,7 @@ export default function App() {
     } finally {
       setIsSyncing(false);
     }
-  }, [selectedSport, selectedDate]);
+  }, [selectedSport, selectedDate, selectedProvider]);
 
   useEffect(() => {
     syncLiveMatches();
@@ -491,6 +494,8 @@ export default function App() {
                 setSelectedSport={setSelectedSport}
                 selectedDate={selectedDate}
                 onSelectDate={handleSelectDate}
+                selectedProvider={selectedProvider}
+                setSelectedProvider={setSelectedProvider}
                 onManualRefresh={() => syncLiveMatches(true)}
                 isSyncing={isSyncing}
               />

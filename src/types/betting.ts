@@ -2,7 +2,7 @@ export type MatchStatus = 'NOT_STARTED' | 'LIVE' | 'FINISHED' | 'POSTPONED' | 'H
 
 export type SportType = 'FOOTBALL' | 'BASKETBALL' | 'VOLLEYBALL' | 'TENNIS' | 'TABLE_TENNIS' | 'HANDBALL';
 
-export type ApiProviderType = 'ALL' | 'APISPORTS' | 'RAPIDAPI' | 'FOOTBALL_DATA' | 'WEB_SEARCH';
+export type ApiProviderType = 'ALL' | 'LIVESCORE_FULL' | 'ESPN' | 'THESPORTSDB' | 'IDDAA_BILYONER' | 'SIMULATOR' | 'APISPORTS' | 'RAPIDAPI' | 'FOOTBALL_DATA' | 'WEB_SEARCH';
 
 export interface Odds {
   ms1: number;

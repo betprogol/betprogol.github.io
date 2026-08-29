@@ -29,7 +29,7 @@ import {
   X,
   Trophy
 } from 'lucide-react';
-import { Match, BetSlipSelection, SportType } from '../types/betting';
+import { Match, BetSlipSelection, SportType, ApiProviderType } from '../types/betting';
 import { TeamLogo } from './TeamLogo';
 import { LivePitchTracker } from './LivePitchTracker';
 import { TeamFormTrendsChart } from './TeamFormTrendsChart';
@@ -46,6 +46,8 @@ interface FixtureListProps {
   setSelectedSport: (sport: SportType | 'ALL') => void;
   selectedDate?: string;
   onSelectDate?: (date: string) => void;
+  selectedProvider?: ApiProviderType;
+  setSelectedProvider?: (provider: ApiProviderType) => void;
   onManualRefresh?: () => void;
   isSyncing?: boolean;
 }
@@ -60,6 +62,8 @@ export const FixtureList: React.FC<FixtureListProps> = ({
   setSelectedSport,
   selectedDate = 'today',
   onSelectDate,
+  selectedProvider = 'LIVESCORE_FULL',
+  setSelectedProvider,
   onManualRefresh,
   isSyncing = false
 }) => {
@@ -67,6 +71,7 @@ export const FixtureList: React.FC<FixtureListProps> = ({
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<'ALL' | 'LIVE' | 'TODAY' | 'AI_PICKS'>('ALL');
   const [selectedLeagueFilter, setSelectedLeagueFilter] = useState<string>('ALL');
   const [isLeagueModalOpen, setIsLeagueModalOpen] = useState(false);
+  const [isApiModalOpen, setIsApiModalOpen] = useState(false);
   const [leagueSearchTerm, setLeagueSearchTerm] = useState('');
   const [expandedPitchMatchId, setExpandedPitchMatchId] = useState<string | null>(null);
   const [expandedTrendsMatchId, setExpandedTrendsMatchId] = useState<string | null>(null);
@@ -337,8 +342,33 @@ export const FixtureList: React.FC<FixtureListProps> = ({
             </button>
           </div>
 
-          {/* Search Field & League Dropdown */}
+          {/* Search Field, League & API Dropdowns */}
           <div className="flex flex-col sm:flex-row items-center gap-2 w-full md:w-auto">
+            {/* API Source Selector Button */}
+            <div className="relative w-full sm:w-auto">
+              <button
+                type="button"
+                onClick={() => setIsApiModalOpen(true)}
+                className="w-full sm:w-auto bg-[#161B22] hover:bg-[#1C2128] border border-cyan-500/40 hover:border-cyan-400 text-cyan-300 text-xs rounded-lg px-3 py-1.5 flex items-center justify-between gap-2 font-mono transition-all shadow-sm active:scale-95 cursor-pointer"
+              >
+                <div className="flex items-center gap-1.5 truncate max-w-[200px]">
+                  <Zap className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                  <span className="font-bold truncate">
+                    {selectedProvider === 'ESPN'
+                      ? 'API: ESPN Scoreboards'
+                      : selectedProvider === 'THESPORTSDB'
+                      ? 'API: TheSportsDB Live'
+                      : selectedProvider === 'IDDAA_BILYONER'
+                      ? 'API: İddaa / Bilyoner'
+                      : selectedProvider === 'SIMULATOR'
+                      ? 'API: Simülatör'
+                      : 'API: LiveScore & Tam Bülten'}
+                  </span>
+                </div>
+                <ChevronDown className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+              </button>
+            </div>
+
             {/* Custom League Selector Dropdown */}
             <div className="relative w-full sm:w-auto">
               <button
@@ -884,6 +914,184 @@ export const FixtureList: React.FC<FixtureListProps> = ({
           })
         )}
       </div>
+
+      {/* API Selection Modal */}
+      {isApiModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[#161B22] border border-[#30363D] rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col font-sans">
+            {/* Header */}
+            <div className="p-4 bg-[#0D1117] border-b border-[#30363D] flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
+                  <Zap className="w-5 h-5 animate-pulse" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">Canlı Skor & API Servisi Seçimi</h3>
+                  <p className="text-xs text-gray-400 font-mono">Çalıştırmak istediğiniz API veritabanını seçin</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsApiModalOpen(false)}
+                className="p-1.5 text-gray-400 hover:text-white rounded-lg hover:bg-[#21262D] transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Options Body */}
+            <div className="p-4 space-y-3 max-h-[70vh] overflow-y-auto font-mono text-xs">
+              {/* Option 1: LIVESCORE_FULL */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (setSelectedProvider) setSelectedProvider('LIVESCORE_FULL');
+                  setIsApiModalOpen(false);
+                  if (onManualRefresh) onManualRefresh();
+                }}
+                className={`w-full text-left p-3.5 rounded-xl border transition-all cursor-pointer flex items-start gap-3 ${
+                  selectedProvider === 'LIVESCORE_FULL'
+                    ? 'bg-cyan-950/40 border-cyan-400 text-white shadow-lg shadow-cyan-950/50'
+                    : 'bg-[#0D1117] border-[#30363D] text-gray-300 hover:border-gray-500'
+                }`}
+              >
+                <div className="text-2xl pt-0.5">🌐</div>
+                <div className="flex-1 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-cyan-300 text-sm">LiveScore & Tam Fikstür Bülteni</span>
+                    <span className="text-[10px] bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 px-2 py-0.5 rounded-full font-bold">
+                      Tavsiye Edilen (134+ Maç)
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-400 font-sans leading-relaxed">
+                    Trendyol Süper Lig, 1. Lig, Premier League, La Liga, Serie A, EuroLeague, NBA vb. tüm 25+ ligin eksiksiz maç bültenini sunar ve canlı maç skorlarını anlık günceller.
+                  </p>
+                </div>
+              </button>
+
+              {/* Option 2: ESPN */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (setSelectedProvider) setSelectedProvider('ESPN');
+                  setIsApiModalOpen(false);
+                  if (onManualRefresh) onManualRefresh();
+                }}
+                className={`w-full text-left p-3.5 rounded-xl border transition-all cursor-pointer flex items-start gap-3 ${
+                  selectedProvider === 'ESPN'
+                    ? 'bg-amber-950/40 border-amber-400 text-white shadow-lg shadow-amber-950/50'
+                    : 'bg-[#0D1117] border-[#30363D] text-gray-300 hover:border-gray-500'
+                }`}
+              >
+                <div className="text-2xl pt-0.5">⚡</div>
+                <div className="flex-1 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-amber-300 text-sm">ESPN Scoreboards Live API</span>
+                    <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full font-bold">
+                      Yalnızca Anlık Canlı Maçlar
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-400 font-sans leading-relaxed">
+                    Sadece şu anda sahalarda bilfiil oynanmakta olan resmi canlı futbol ve basketbol skor akışını çeker.
+                  </p>
+                </div>
+              </button>
+
+              {/* Option 3: THESPORTSDB */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (setSelectedProvider) setSelectedProvider('THESPORTSDB');
+                  setIsApiModalOpen(false);
+                  if (onManualRefresh) onManualRefresh();
+                }}
+                className={`w-full text-left p-3.5 rounded-xl border transition-all cursor-pointer flex items-start gap-3 ${
+                  selectedProvider === 'THESPORTSDB'
+                    ? 'bg-purple-950/40 border-purple-400 text-white shadow-lg shadow-purple-950/50'
+                    : 'bg-[#0D1117] border-[#30363D] text-gray-300 hover:border-gray-500'
+                }`}
+              >
+                <div className="text-2xl pt-0.5">📊</div>
+                <div className="flex-1 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-purple-300 text-sm">TheSportsDB Multi-Sport Live</span>
+                    <span className="text-[10px] bg-purple-500/20 text-purple-300 border border-purple-500/40 px-2 py-0.5 rounded-full font-bold">
+                      Çoklu Spor Servisi
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-400 font-sans leading-relaxed">
+                    Futbol, Basketbol, Voleybol ve Tenis dahil çok branşlı canlı maç skorları.
+                  </p>
+                </div>
+              </button>
+
+              {/* Option 4: IDDAA_BILYONER */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (setSelectedProvider) setSelectedProvider('IDDAA_BILYONER');
+                  setIsApiModalOpen(false);
+                  if (onManualRefresh) onManualRefresh();
+                }}
+                className={`w-full text-left p-3.5 rounded-xl border transition-all cursor-pointer flex items-start gap-3 ${
+                  selectedProvider === 'IDDAA_BILYONER'
+                    ? 'bg-green-950/40 border-green-400 text-white shadow-lg shadow-green-950/50'
+                    : 'bg-[#0D1117] border-[#30363D] text-gray-300 hover:border-gray-500'
+                }`}
+              >
+                <div className="text-2xl pt-0.5">🎯</div>
+                <div className="flex-1 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-green-300 text-sm">İddaa & Bilyoner Oran Servisi</span>
+                    <span className="text-[10px] bg-green-500/20 text-green-300 border border-green-500/40 px-2 py-0.5 rounded-full font-bold">
+                      Resmi MBS & Oranlar
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-400 font-sans leading-relaxed">
+                    Türkiye İddaa bülteni ile tam uyumlu MBS1, MBS2 ve canlı Kral Oranlar.
+                  </p>
+                </div>
+              </button>
+
+              {/* Option 5: SIMULATOR */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (setSelectedProvider) setSelectedProvider('SIMULATOR');
+                  setIsApiModalOpen(false);
+                  if (onManualRefresh) onManualRefresh();
+                }}
+                className={`w-full text-left p-3.5 rounded-xl border transition-all cursor-pointer flex items-start gap-3 ${
+                  selectedProvider === 'SIMULATOR'
+                    ? 'bg-blue-950/40 border-blue-400 text-white shadow-lg shadow-blue-950/50'
+                    : 'bg-[#0D1117] border-[#30363D] text-gray-300 hover:border-gray-500'
+                }`}
+              >
+                <div className="text-2xl pt-0.5">🤖</div>
+                <div className="flex-1 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-blue-300 text-sm">Canlı Fikstür Simülatörü</span>
+                    <span className="text-[10px] bg-blue-500/20 text-blue-300 border border-blue-500/40 px-2 py-0.5 rounded-full font-bold">
+                      Test & Dinamik Skor
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-400 font-sans leading-relaxed">
+                    Sürekli dakikası artan, canlı gol ve oran değişimi üreten test modu.
+                  </p>
+                </div>
+              </button>
+            </div>
+
+            <div className="p-3 bg-[#0D1117] border-t border-[#30363D] flex justify-end">
+              <button
+                onClick={() => setIsApiModalOpen(false)}
+                className="px-4 py-2 bg-[#21262D] hover:bg-[#30363D] text-white font-bold text-xs rounded-lg transition cursor-pointer"
+              >
+                Kapat
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

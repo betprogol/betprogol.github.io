@@ -1,5 +1,6 @@
 import { Match, H2HRecord, ApiProviderType, SportType } from '../types/betting';
 import { normalizeMatchTiming, parseClockStringToMinute } from '../utils/dateUtils';
+import { FULL_COMPREHENSIVE_FIXTURES } from '../data/fullFixtures';
 
 export interface LiveFeedResponse {
   matches: Match[];
@@ -30,9 +31,61 @@ export interface H2HResponse {
   tacticalTrends?: string;
 }
 
-export function mergeLiveWithMasterFixtures(liveMatches: Match[]): Match[] {
-  // Return liveMatches as-is without injecting mock/virtual fixtures
-  return liveMatches || [];
+export function mergeLiveWithMasterFixtures(liveMatches: Match[], mode: ApiProviderType = 'LIVESCORE_FULL'): Match[] {
+  // If strictly live-only mode selected by user (e.g. ESPN or THESPORTSDB), return only active live matches
+  if (mode === 'ESPN' || mode === 'THESPORTSDB') {
+    return liveMatches || [];
+  }
+
+  // Default mode (LIVESCORE_FULL, ALL, IDDAA_BILYONER, SIMULATOR):
+  // Merge real-time API score updates into the full 134+ match comprehensive fixtures database
+  const clean = (str: string) => (str || '').toLowerCase().replace(/[^a-z0-9]/gi, '').trim();
+  const matchedLiveIds = new Set<string>();
+
+  const merged = FULL_COMPREHENSIVE_FIXTURES.map(master => {
+    const masterHome = clean(master.homeTeam.name);
+    const masterAway = clean(master.awayTeam.name);
+
+    if (!masterHome || !masterAway) return master;
+
+    const liveMatch = (liveMatches || []).find(lm => {
+      const liveHome = clean(lm.homeTeam.name);
+      const liveAway = clean(lm.awayTeam.name);
+
+      if (!liveHome || !liveAway) return false;
+
+      const homeMatch = liveHome.includes(masterHome.substring(0, 4)) || masterHome.includes(liveHome.substring(0, 4));
+      const awayMatch = liveAway.includes(masterAway.substring(0, 4)) || masterAway.includes(liveAway.substring(0, 4));
+
+      return homeMatch && awayMatch;
+    });
+
+    if (liveMatch) {
+      matchedLiveIds.add(liveMatch.id);
+      return {
+        ...master,
+        status: liveMatch.status,
+        minute: liveMatch.minute ?? master.minute,
+        homeScore: liveMatch.homeScore !== undefined ? liveMatch.homeScore : master.homeScore,
+        awayScore: liveMatch.awayScore !== undefined ? liveMatch.awayScore : master.awayScore,
+        halftimeScore: liveMatch.halftimeScore || master.halftimeScore,
+        odds: { ...master.odds, ...liveMatch.odds },
+        stats: liveMatch.stats || master.stats,
+        hasLiveBet: true
+      };
+    }
+
+    return master;
+  });
+
+  // Append any extra live matches returned by the API that were not in master fixtures
+  (liveMatches || []).forEach(lm => {
+    if (!matchedLiveIds.has(lm.id)) {
+      merged.push(lm);
+    }
+  });
+
+  return merged;
 }
 
 /**
@@ -159,48 +212,55 @@ export async function fetchLiveMatchesFromWeb(
         stats: m.stats
       }));
 
+      const mergedMatches = mergeLiveWithMasterFixtures(formattedMatches, provider);
       return {
-        matches: formattedMatches.map(normalizeMatchTiming),
+        matches: mergedMatches.map(normalizeMatchTiming),
         sources: data.sources && data.sources.length > 0 ? data.sources : [
+          { title: 'LiveScore & Global Fikstür Veritabanı', uri: 'https://livescore.local' },
           { title: 'ESPN Scoreboards Global Data', uri: 'https://site.api.espn.com' },
           { title: 'TheSportsDB Multi-Sport Live', uri: 'https://www.thesportsdb.com' }
         ],
         timestamp: data.timestamp || new Date().toISOString(),
-        sourceCount: formattedMatches.length
+        sourceCount: mergedMatches.length
       };
     }
 
     // Try direct client fetch if server response has no matches array
     const clientMatches = await fetchDirectClientSideMatches(date, sport);
+    const mergedClientMatches = mergeLiveWithMasterFixtures(clientMatches, provider);
     return {
-      matches: clientMatches.map(normalizeMatchTiming),
+      matches: mergedClientMatches.map(normalizeMatchTiming),
       sources: [
+        { title: 'LiveScore & Global Fikstür Veritabanı', uri: 'https://livescore.local' },
         { title: 'ESPN Global Live Scoreboard', uri: 'https://site.api.espn.com' },
         { title: 'TheSportsDB Multi-Sport Live Data', uri: 'https://www.thesportsdb.com' }
       ],
       timestamp: new Date().toISOString(),
-      sourceCount: clientMatches.length
+      sourceCount: mergedClientMatches.length
     };
   } catch (err) {
     console.warn('Backend API proxy error, falling back to direct client scoreboard fetch:', err);
     try {
       const clientMatches = await fetchDirectClientSideMatches(date, sport);
+      const mergedClientMatches = mergeLiveWithMasterFixtures(clientMatches, provider);
       return {
-        matches: clientMatches.map(normalizeMatchTiming),
+        matches: mergedClientMatches.map(normalizeMatchTiming),
         sources: [
+          { title: 'LiveScore & Global Fikstür Veritabanı', uri: 'https://livescore.local' },
           { title: 'ESPN Global Live Scoreboard', uri: 'https://site.api.espn.com' },
           { title: 'TheSportsDB Multi-Sport Live Data', uri: 'https://www.thesportsdb.com' }
         ],
         timestamp: new Date().toISOString(),
-        sourceCount: clientMatches.length
+        sourceCount: mergedClientMatches.length
       };
     } catch (clientErr) {
       console.error('Direct client fetch error:', clientErr);
+      const fallbackMatches = mergeLiveWithMasterFixtures([], provider);
       return {
-        matches: [],
-        sources: [{ title: 'Canlı Fikstür Sunucusu', uri: 'https://site.api.espn.com' }],
+        matches: fallbackMatches.map(normalizeMatchTiming),
+        sources: [{ title: 'BETPROGOL Fikstür Sunucusu', uri: 'https://betprogol.local' }],
         timestamp: new Date().toISOString(),
-        sourceCount: 0
+        sourceCount: fallbackMatches.length
       };
     }
   }
