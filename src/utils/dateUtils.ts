@@ -268,8 +268,8 @@ export function getMatchTimingInfo(
 }
 
 /**
- * Normalizes a match object to guarantee status (LIVE, NOT_STARTED, FINISHED), minute, and scores
- * stay strictly synchronized with real-world TSİ time.
+ * Normalizes a match object to guarantee status (NOT_STARTED, LIVE, FINISHED), minute, and scores
+ * stay strictly faithful to real-world data without fabricating fake live matches.
  */
 export function normalizeMatchTiming<T extends {
   id?: string;
@@ -290,111 +290,37 @@ export function normalizeMatchTiming<T extends {
     return match;
   }
 
-  const timing = getMatchTimingInfo(match.date, match.time, match.sport);
-  const mId = match.id || 'match-default';
-  // Deterministic seed from id
-  let hash = 0;
-  for (let i = 0; i < mId.length; i++) {
-    hash = (hash << 5) - hash + mId.charCodeAt(i);
-    hash |= 0;
-  }
-  const positiveSeed = Math.abs(hash);
-
-  if (timing.isLive) {
-    const liveMin = match.minute || timing.liveMinute || 1;
-    let currentHome = match.homeScore;
-    let currentAway = match.awayScore;
-
-    // If scores were not set yet, generate realistic live scores based on minute & sport
-    if (currentHome === undefined || currentAway === undefined) {
-      if (match.sport === 'BASKETBALL') {
-        const basePtsPerMin = 1.9;
-        const totalPts = Math.floor(liveMin * basePtsPerMin);
-        const homeShare = 0.48 + (positiveSeed % 9) / 100;
-        currentHome = Math.floor(totalPts * homeShare);
-        currentAway = totalPts - (currentHome || 0);
-      } else if (match.sport === 'VOLLEYBALL') {
-        if (liveMin < 25) { currentHome = 0; currentAway = 0; }
-        else if (liveMin < 50) { currentHome = (positiveSeed % 2 === 0) ? 1 : 0; currentAway = currentHome === 1 ? 0 : 1; }
-        else if (liveMin < 80) { currentHome = 1; currentAway = 1; }
-        else { currentHome = (positiveSeed % 2 === 0) ? 2 : 1; currentAway = (positiveSeed % 2 === 0) ? 1 : 2; }
-      } else {
-        // Football / Soccer
-        if (liveMin < 15) {
-          currentHome = 0;
-          currentAway = 0;
-        } else if (liveMin < 40) {
-          const pattern = positiveSeed % 4;
-          if (pattern === 0) { currentHome = 1; currentAway = 0; }
-          else if (pattern === 1) { currentHome = 0; currentAway = 1; }
-          else if (pattern === 2) { currentHome = 1; currentAway = 1; }
-          else { currentHome = 0; currentAway = 0; }
-        } else if (liveMin < 70) {
-          const pattern = positiveSeed % 5;
-          if (pattern === 0) { currentHome = 1; currentAway = 0; }
-          else if (pattern === 1) { currentHome = 2; currentAway = 1; }
-          else if (pattern === 2) { currentHome = 1; currentAway = 1; }
-          else if (pattern === 3) { currentHome = 0; currentAway = 2; }
-          else { currentHome = 2; currentAway = 0; }
-        } else {
-          const pattern = positiveSeed % 6;
-          if (pattern === 0) { currentHome = 2; currentAway = 1; }
-          else if (pattern === 1) { currentHome = 3; currentAway = 1; }
-          else if (pattern === 2) { currentHome = 2; currentAway = 2; }
-          else if (pattern === 3) { currentHome = 1; currentAway = 0; }
-          else if (pattern === 4) { currentHome = 0; currentAway = 2; }
-          else { currentHome = 3; currentAway = 2; }
-        }
-      }
-    }
-
-    return {
-      ...match,
-      status: 'LIVE',
-      minute: liveMin,
-      homeScore: Number(currentHome ?? 0),
-      awayScore: Number(currentAway ?? 0),
-      hasLiveBet: true,
-      hasLiveStream: true
-    };
-  } else if (timing.isFinished) {
-    let finalHome = match.homeScore;
-    let finalAway = match.awayScore;
-
-    if (finalHome === undefined || finalAway === undefined) {
-      if (match.sport === 'BASKETBALL') {
-        finalHome = 75 + (positiveSeed % 25);
-        finalAway = 70 + ((positiveSeed * 3) % 25);
-      } else if (match.sport === 'VOLLEYBALL') {
-        finalHome = (positiveSeed % 2 === 0) ? 3 : (positiveSeed % 3 === 0 ? 3 : 1);
-        finalAway = finalHome === 3 ? (positiveSeed % 3) : 3;
-      } else {
-        const pattern = positiveSeed % 6;
-        if (pattern === 0) { finalHome = 2; finalAway = 1; }
-        else if (pattern === 1) { finalHome = 3; finalAway = 0; }
-        else if (pattern === 2) { finalHome = 1; finalAway = 1; }
-        else if (pattern === 3) { finalHome = 0; finalAway = 2; }
-        else if (pattern === 4) { finalHome = 3; finalAway = 2; }
-        else { finalHome = 1; finalAway = 0; }
-      }
-    }
-
+  // If match was already marked as FINISHED, preserve final scores and status
+  if (match.status === 'FINISHED') {
     return {
       ...match,
       status: 'FINISHED',
-      homeScore: Number(finalHome),
-      awayScore: Number(finalAway)
-    };
-  } else if (timing.isFuture) {
-    return {
-      ...match,
-      status: 'NOT_STARTED',
-      minute: undefined,
-      homeScore: undefined,
-      awayScore: undefined
+      homeScore: match.homeScore !== undefined ? Number(match.homeScore) : 0,
+      awayScore: match.awayScore !== undefined ? Number(match.awayScore) : 0,
+      minute: undefined
     };
   }
 
-  return match;
+  // If match is genuinely LIVE (from real live score API)
+  if (match.status === 'LIVE') {
+    return {
+      ...match,
+      status: 'LIVE',
+      minute: match.minute || 1,
+      homeScore: match.homeScore !== undefined ? Number(match.homeScore) : 0,
+      awayScore: match.awayScore !== undefined ? Number(match.awayScore) : 0,
+      hasLiveBet: true,
+      hasLiveStream: match.hasLiveStream ?? true
+    };
+  }
+
+  // Standard upcoming / not started fixture in the bulletin
+  return {
+    ...match,
+    status: 'NOT_STARTED',
+    minute: undefined,
+    homeScore: undefined,
+    awayScore: undefined
+  };
 }
 
