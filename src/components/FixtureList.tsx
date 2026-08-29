@@ -40,6 +40,8 @@ interface FixtureListProps {
   onOpenAIForMatch: (match: Match) => void;
   selectedSport: SportType | 'ALL';
   setSelectedSport: (sport: SportType | 'ALL') => void;
+  selectedDate?: string;
+  onSelectDate?: (date: string) => void;
   onManualRefresh?: () => void;
   isSyncing?: boolean;
 }
@@ -52,6 +54,8 @@ export const FixtureList: React.FC<FixtureListProps> = ({
   onOpenAIForMatch,
   selectedSport,
   setSelectedSport,
+  selectedDate = 'today',
+  onSelectDate,
   onManualRefresh,
   isSyncing = false
 }) => {
@@ -240,6 +244,45 @@ export const FixtureList: React.FC<FixtureListProps> = ({
           })}
         </div>
 
+        {/* Date Selector Bar for True Real Fixtures & Future Betting */}
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 border-t border-[#1F2937]/50 pt-2">
+          <span className="text-[11px] font-bold text-gray-400 flex items-center gap-1 pl-1 pr-2">
+            <Calendar className="w-3.5 h-3.5 text-green-400" />
+            <span>Fikstür Günü:</span>
+          </span>
+          <button
+            onClick={() => onSelectDate && onSelectDate('yesterday')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+              selectedDate === 'yesterday'
+                ? 'bg-amber-500 text-black shadow-md shadow-amber-500/20 font-extrabold'
+                : 'bg-[#161B22] text-gray-400 hover:text-white border border-[#30363D]'
+            }`}
+          >
+            ◀ Dün (Sonuçlar)
+          </button>
+          <button
+            onClick={() => onSelectDate && onSelectDate('today')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
+              selectedDate === 'today'
+                ? 'bg-green-500 text-black shadow-md shadow-green-500/20 font-extrabold'
+                : 'bg-[#161B22] text-gray-300 hover:text-white border border-[#30363D]'
+            }`}
+          >
+            <span className="w-2 h-2 rounded-full bg-green-950 animate-ping" />
+            <span>Bugün & Canlı</span>
+          </button>
+          <button
+            onClick={() => onSelectDate && onSelectDate('tomorrow')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+              selectedDate === 'tomorrow'
+                ? 'bg-blue-500 text-black shadow-md shadow-blue-500/20 font-extrabold'
+                : 'bg-[#161B22] text-gray-300 hover:text-white border border-[#30363D]'
+            }`}
+          >
+            Yarın (Erken Bahis) ▶
+          </button>
+        </div>
+
         {/* Quick Filter Buttons & Search Input */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-2.5 pt-1">
           {/* Status Tabs */}
@@ -273,7 +316,7 @@ export const FixtureList: React.FC<FixtureListProps> = ({
                   : 'text-gray-400 hover:text-white bg-[#161B22]'
               }`}
             >
-              Bugünkü Bülten
+              Günün Bülteni
             </button>
             <button
               onClick={() => setSelectedStatusFilter('AI_PICKS')}

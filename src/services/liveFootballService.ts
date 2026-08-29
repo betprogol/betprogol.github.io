@@ -32,63 +32,8 @@ export interface H2HResponse {
 }
 
 export function mergeLiveWithMasterFixtures(liveMatches: Match[]): Match[] {
-  // Start with a clean copy of all master fixtures (154+ matches across all sports)
-  const masterList: Match[] = MOCK_FIXTURES.map(m => ({ 
-    ...m, 
-    odds: { ...m.odds }, 
-    homeTeam: { ...m.homeTeam }, 
-    awayTeam: { ...m.awayTeam } 
-  }));
-  const matchedLiveIndices = new Set<number>();
-
-  // Map each master fixture to live updates if available
-  masterList.forEach((masterMatch, idx) => {
-    const mHome = (masterMatch.homeTeam?.name || '').toLowerCase().trim();
-    const mAway = (masterMatch.awayTeam?.name || '').toLowerCase().trim();
-    const mHomeShort = (masterMatch.homeTeam?.shortName || '').toLowerCase().trim();
-    const mAwayShort = (masterMatch.awayTeam?.shortName || '').toLowerCase().trim();
-
-    const liveMatchIdx = liveMatches.findIndex((lm, lIdx) => {
-      if (matchedLiveIndices.has(lIdx)) return false;
-      if (lm.id === masterMatch.id) return true;
-      const lHome = (lm.homeTeam?.name || '').toLowerCase().trim();
-      const lAway = (lm.awayTeam?.name || '').toLowerCase().trim();
-      const lHomeShort = (lm.homeTeam?.shortName || '').toLowerCase().trim();
-      const lAwayShort = (lm.awayTeam?.shortName || '').toLowerCase().trim();
-
-      const homeMatches = lHome.includes(mHome) || mHome.includes(lHome) || (mHomeShort.length >= 2 && (lHome.includes(mHomeShort) || lHomeShort === mHomeShort));
-      const awayMatches = lAway.includes(mAway) || mAway.includes(lAway) || (mAwayShort.length >= 2 && (lAway.includes(mAwayShort) || lAwayShort === mAwayShort));
-      return homeMatches && awayMatches;
-    });
-
-    if (liveMatchIdx !== -1) {
-      const live = liveMatches[liveMatchIdx];
-      matchedLiveIndices.add(liveMatchIdx);
-
-      masterList[idx] = {
-        ...masterMatch,
-        status: live.status || masterMatch.status,
-        minute: live.minute !== undefined ? live.minute : masterMatch.minute,
-        homeScore: live.homeScore !== undefined ? live.homeScore : masterMatch.homeScore,
-        awayScore: live.awayScore !== undefined ? live.awayScore : masterMatch.awayScore,
-        halftimeScore: live.halftimeScore || masterMatch.halftimeScore,
-        odds: {
-          ...masterMatch.odds,
-          ...(live.odds || {})
-        },
-        stats: live.stats || masterMatch.stats,
-        stadium: live.stadium || masterMatch.stadium,
-        referee: live.referee || masterMatch.referee,
-        tvChannel: live.tvChannel || masterMatch.tvChannel,
-        hasLiveStream: live.status === 'LIVE' || masterMatch.hasLiveStream
-      };
-    }
-  });
-
-  // Additional live matches from external feeds that weren't in master list
-  const extraLiveMatches = liveMatches.filter((_, lIdx) => !matchedLiveIndices.has(lIdx));
-
-  return [...extraLiveMatches, ...masterList];
+  // Return the pure real-time matches without mock pollution
+  return liveMatches;
 }
 
 /**
@@ -130,7 +75,7 @@ export async function fetchLiveMatchesFromWeb(
 
     const data = await res.json();
 
-    if (data.matches && data.matches.length > 0) {
+    if (data.matches && Array.isArray(data.matches)) {
       // Ensure all matches have valid IDs and required fields
       const formattedMatches: Match[] = data.matches.map((m: any, idx: number) => ({
         id: m.id || `live-match-${Date.now()}-${idx}`,
@@ -212,72 +157,49 @@ export async function fetchLiveMatchesFromWeb(
           doubleChance12: m.odds?.doubleChance12 ? Number(m.odds.doubleChance12) : 1.25,
           doubleChanceX2: m.odds?.doubleChanceX2 ? Number(m.odds.doubleChanceX2) : (m.odds?.msX ? Number((1 / (1/(Number(m.odds?.ms2) || 1.95) + 1/(m.odds?.msX || 3.3))).toFixed(2)) : undefined)
         },
-        stats: m.stats || {
-          possession: [52, 48],
-          shotsTotal: [11, 9],
-          shotsOnTarget: [5, 4],
-          xg: [1.45, 1.10],
-          corners: [5, 4],
-          fouls: [10, 12],
-          yellowCards: [2, 2],
-          redCards: [0, 0],
-          dangerousAttacks: [45, 38]
-        }
+        stats: m.stats
       }));
 
-      const mergedAllMatches = mergeLiveWithMasterFixtures(formattedMatches);
-
       return {
-        matches: mergedAllMatches.map(normalizeMatchTiming),
+        matches: formattedMatches.map(normalizeMatchTiming),
         sources: data.sources && data.sources.length > 0 ? data.sources : [
-          { title: 'API-Football (RapidAPI) Canlı Yayın', uri: 'https://rapidapi.com' },
-          { title: 'Football-Data.org UEFA & Süper Lig Feed', uri: 'https://www.football-data.org' },
-          { title: 'ESPN Global Multi-Sport Scoreboard', uri: 'https://site.api.espn.com' },
-          { title: 'OpenLigaDB European Live Scores', uri: 'https://api.openligadb.de' },
-          { title: 'TheSportsDB Global Multi-Sport API', uri: 'https://www.thesportsdb.com' }
+          { title: 'ESPN Scoreboards Global Data', uri: 'https://site.api.espn.com' },
+          { title: 'TheSportsDB Multi-Sport Live', uri: 'https://www.thesportsdb.com' },
+          { title: 'Football-Data.org Resmi Fikstür', uri: 'https://www.football-data.org' }
         ],
         timestamp: data.timestamp || new Date().toISOString(),
-        sourceCount: (data.sources?.length || 5)
+        sourceCount: formattedMatches.length
       };
     }
 
     return {
-      matches: MOCK_FIXTURES.map(normalizeMatchTiming),
-      sources: data.sources || [{ title: 'Trendyol Süper Lig & İddaa Canlı', uri: 'https://www.iddaa.com' }],
+      matches: [],
+      sources: data.sources || [{ title: 'ESPN Scoreboards Canlı Skor & Bülten', uri: 'https://site.api.espn.com' }],
       timestamp: new Date().toISOString(),
-      sourceCount: MOCK_FIXTURES.length
+      sourceCount: 0
     };
   } catch (err) {
-    console.warn('Backend API proxy unaccessible, executing direct client-side real API fetches:', err);
+    console.warn('Backend API proxy error, falling back to direct client scoreboard fetch:', err);
     try {
-      const clientMatches = await fetchDirectClientSideMatches();
-      if (clientMatches.length > 0) {
-        const mergedClientMatches = mergeLiveWithMasterFixtures(clientMatches);
-        return {
-          matches: mergedClientMatches.map(normalizeMatchTiming),
-          sources: [
-            { title: 'ESPN Global Live Football Feeds', uri: 'https://site.api.espn.com' },
-            { title: 'Football-Data.org Official UEFA & League Fixtures', uri: 'https://www.football-data.org' },
-            { title: 'TheSportsDB Multi-Sport Live Data', uri: 'https://www.thesportsdb.com' },
-            { title: 'OpenLigaDB European Scores', uri: 'https://api.openligadb.de' }
-          ],
-          timestamp: new Date().toISOString(),
-          sourceCount: clientMatches.length
-        };
-      }
+      const clientMatches = await fetchDirectClientSideMatches(date, sport);
+      return {
+        matches: clientMatches.map(normalizeMatchTiming),
+        sources: [
+          { title: 'ESPN Global Live Scoreboard', uri: 'https://site.api.espn.com' },
+          { title: 'TheSportsDB Multi-Sport Live Data', uri: 'https://www.thesportsdb.com' }
+        ],
+        timestamp: new Date().toISOString(),
+        sourceCount: clientMatches.length
+      };
     } catch (clientErr) {
-      console.warn('Direct client fetch warning:', clientErr);
+      console.error('Direct client fetch error:', clientErr);
+      return {
+        matches: [],
+        sources: [],
+        timestamp: new Date().toISOString(),
+        sourceCount: 0
+      };
     }
-
-    return {
-      matches: MOCK_FIXTURES.map(normalizeMatchTiming),
-      sources: [
-        { title: 'Maçkolik Canlı Skor & Bülten', uri: 'https://www.mackolik.com' },
-        { title: 'Trendyol Süper Lig Canlı', uri: 'https://www.tff.org' }
-      ],
-      timestamp: new Date().toISOString(),
-      sourceCount: MOCK_FIXTURES.length
-    };
   }
 }
 
@@ -326,13 +248,29 @@ export function parseAmericanOdds(val: any, defaultVal: number): number {
 /**
  * Direct client-side real API fetcher for static deployments (GitHub Pages / SPA)
  */
-async function fetchDirectClientSideMatches(): Promise<Match[]> {
+async function fetchDirectClientSideMatches(date?: string, sport?: string): Promise<Match[]> {
   const directMatches: Match[] = [];
   const addedMatchKeys = new Set<string>();
 
+  const nowIstanbul = new Date();
+  const todayStrIstanbul = nowIstanbul.toLocaleDateString('en-CA', { timeZone: 'Europe/Istanbul' });
+  let targetDateStr = todayStrIstanbul;
+  if (date === 'tomorrow') {
+    const d = new Date(nowIstanbul.getTime() + 24 * 60 * 60 * 1000);
+    targetDateStr = d.toLocaleDateString('en-CA', { timeZone: 'Europe/Istanbul' });
+  } else if (date === 'yesterday') {
+    const d = new Date(nowIstanbul.getTime() - 24 * 60 * 60 * 1000);
+    targetDateStr = d.toLocaleDateString('en-CA', { timeZone: 'Europe/Istanbul' });
+  } else if (date && date.includes('-')) {
+    targetDateStr = date;
+  }
+  const dateParam = targetDateStr.replace(/-/g, '');
+
   const espnEndpoints = [
     { code: 'tur.1', leagueId: 'tr-superlig', leagueName: 'Trendyol Süper Lig', country: 'Türkiye', logo: '🇹🇷', isTurk: true },
+    { code: 'tur.2', leagueId: 'tr-1lig', leagueName: 'Trendyol 1. Lig', country: 'Türkiye', logo: '🇹🇷', isTurk: true },
     { code: 'eng.1', leagueId: 'eng-premier', leagueName: 'Premier League', country: 'İngiltere', logo: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', isTurk: false },
+    { code: 'eng.2', leagueId: 'eng-championship', leagueName: 'Championship', country: 'İngiltere', logo: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', isTurk: false },
     { code: 'esp.1', leagueId: 'esp-laliga', leagueName: 'La Liga', country: 'İspanya', logo: '🇪🇸', isTurk: false },
     { code: 'ger.1', leagueId: 'ger-bundesliga', leagueName: 'Bundesliga', country: 'Almanya', logo: '🇩🇪', isTurk: false },
     { code: 'ita.1', leagueId: 'ita-seriea', leagueName: 'Serie A', country: 'İtalya', logo: '🇮🇹', isTurk: false },
@@ -347,7 +285,7 @@ async function fetchDirectClientSideMatches(): Promise<Match[]> {
   try {
     const timestamp = Date.now();
     const promises = espnEndpoints.map(ep =>
-      fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/${ep.code}/scoreboard?_t=${timestamp}`, {
+      fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/${ep.code}/scoreboard?dates=${dateParam}&_t=${timestamp}`, {
         cache: 'no-store',
         headers: {
           'Cache-Control': 'no-cache, no-store, must-revalidate',

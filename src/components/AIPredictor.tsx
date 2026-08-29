@@ -56,8 +56,10 @@ export const AIPredictor: React.FC<AIPredictorProps> = ({
   useEffect(() => {
     if (initialMatch) {
       setSelectedMatch(initialMatch);
+    } else if (!selectedMatch && matches && matches.length > 0) {
+      setSelectedMatch(matches[0]);
     }
-  }, [initialMatch]);
+  }, [initialMatch, matches, selectedMatch]);
 
   useEffect(() => {
     if (selectedMatch) {

@@ -90,9 +90,6 @@ import {
   evaluateAllSlips, 
   simulateMatchStep 
 } from './utils/betEvaluator';
-import { 
-  MOCK_FIXTURES 
-} from './data/mockData';
 import {
   normalizeMatchTiming
 } from './utils/dateUtils';
@@ -102,6 +99,7 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<UserProfile>(() => getCurrentUser());
   const [activeTab, setActiveTab] = useState<string>('fixtures');
   const [selectedSport, setSelectedSport] = useState<SportType | 'ALL'>('ALL');
+  const [selectedDate, setSelectedDate] = useState<string>('today');
   const [darkMode, setDarkMode] = useState<boolean>(true);
   const [isMobileFrame, setIsMobileFrame] = useState<boolean>(false);
 
@@ -117,7 +115,7 @@ export default function App() {
   const [activeSelections, setActiveSelections] = useState<BetSlipSelection[]>([]);
 
   // 3. Live Matches & Fixtures State (Always normalized to current TSİ time)
-  const [matches, setMatches] = useState<Match[]>(() => MOCK_FIXTURES.map(normalizeMatchTiming));
+  const [matches, setMatches] = useState<Match[]>([]);
 
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
 
@@ -178,12 +176,13 @@ export default function App() {
     saveNotificationsToStorage(notifications);
   }, [notifications]);
 
-  // Load real-time matches on start with forceRefresh option
-  const syncLiveMatches = useCallback(async (forceRefresh = false) => {
+  // Load real-time matches on start and on date/sport changes
+  const syncLiveMatches = useCallback(async (forceRefresh = false, customDate?: string) => {
     setIsSyncing(true);
+    const dateToQuery = customDate || selectedDate;
     try {
-      const res = await fetchLiveMatchesFromWeb('all', 'today', undefined, 'ALL', selectedSport, undefined, forceRefresh);
-      if (res.matches && res.matches.length > 0) {
+      const res = await fetchLiveMatchesFromWeb('all', dateToQuery, undefined, 'ALL', selectedSport, undefined, forceRefresh);
+      if (res.matches && Array.isArray(res.matches)) {
         setMatches(prevMatches => {
           const prevMap = new Map<string, Match>(prevMatches.map(m => [m.id, m]));
           return res.matches.map(newMatch => {
@@ -192,9 +191,9 @@ export default function App() {
             if (existing && existing.status === 'LIVE' && normalized.status === 'LIVE') {
               return {
                 ...normalized,
-                homeScore: existing.homeScore ?? normalized.homeScore ?? 0,
-                awayScore: existing.awayScore ?? normalized.awayScore ?? 0,
-                minute: existing.minute ?? normalized.minute ?? 1,
+                homeScore: normalized.homeScore !== undefined ? normalized.homeScore : existing.homeScore ?? 0,
+                awayScore: normalized.awayScore !== undefined ? normalized.awayScore : existing.awayScore ?? 0,
+                minute: normalized.minute || existing.minute || 1,
                 odds: existing.odds || normalized.odds
               };
             }
@@ -203,18 +202,23 @@ export default function App() {
         });
       }
     } catch (e) {
-      console.warn('Sync live matches fallback:', e);
+      console.warn('Sync live matches error:', e);
     } finally {
       setIsSyncing(false);
     }
-  }, [selectedSport]);
+  }, [selectedSport, selectedDate]);
 
   useEffect(() => {
     syncLiveMatches();
-    // Background polling every 45s for fresh fixtures
-    const interval = setInterval(syncLiveMatches, 45000);
+    // Fast polling every 15s for live score and odds accuracy
+    const interval = setInterval(() => syncLiveMatches(false), 15000);
     return () => clearInterval(interval);
   }, [syncLiveMatches]);
+
+  const handleSelectDate = (date: string) => {
+    setSelectedDate(date);
+    syncLiveMatches(true, date);
+  };
 
   // Live match simulation & coupon settlement loop (every 7 seconds)
   useEffect(() => {
@@ -481,6 +485,8 @@ export default function App() {
                 onOpenAIForMatch={handleOpenAIForMatch}
                 selectedSport={selectedSport}
                 setSelectedSport={setSelectedSport}
+                selectedDate={selectedDate}
+                onSelectDate={handleSelectDate}
                 onManualRefresh={() => syncLiveMatches(true)}
                 isSyncing={isSyncing}
               />

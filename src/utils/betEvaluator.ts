@@ -496,40 +496,22 @@ export function simulateMatchStep(match: Match): Match {
     return normalized;
   }
 
-  let homeScore = normalized.homeScore ?? match.homeScore ?? 0;
-  let awayScore = normalized.awayScore ?? match.awayScore ?? 0;
+  let homeScore = normalized.homeScore;
+  let awayScore = normalized.awayScore;
   let updatedOdds = { ...(match.odds || normalized.odds) };
 
-  // Goal probability on step (approx 6% chance), excluding halftime (min 45)
-  const isGoal = Math.random() < 0.06;
-  if (isGoal && normalized.minute && normalized.minute < 90 && normalized.minute !== 45) {
-    if (Math.random() > 0.48) {
-      homeScore += 1;
-      // When Home scores, Home odds drop (down), Away odds rise (up), Over25 drops
-      if (updatedOdds.ms1) updatedOdds.ms1 = Math.max(1.05, Number((updatedOdds.ms1 * 0.78).toFixed(2)));
-      if (updatedOdds.ms2) updatedOdds.ms2 = Number((updatedOdds.ms2 * 1.35).toFixed(2));
-      if (updatedOdds.over25) updatedOdds.over25 = Math.max(1.08, Number((updatedOdds.over25 * 0.85).toFixed(2)));
-    } else {
-      awayScore += 1;
-      // When Away scores, Away odds drop (down), Home odds rise (up)
-      if (updatedOdds.ms2) updatedOdds.ms2 = Math.max(1.05, Number((updatedOdds.ms2 * 0.78).toFixed(2)));
-      if (updatedOdds.ms1) updatedOdds.ms1 = Number((updatedOdds.ms1 * 1.35).toFixed(2));
-      if (updatedOdds.over25) updatedOdds.over25 = Math.max(1.08, Number((updatedOdds.over25 * 0.85).toFixed(2)));
-    }
-  } else {
-    // Periodic live odds fluctuation (45% chance per simulation step) so color flashes are clearly active
-    if (Math.random() < 0.45 && updatedOdds) {
-      const oddsKeys = ['ms1', 'msX', 'ms2', 'over25', 'under25', 'overTotalPoints'] as const;
-      const randomKey = oddsKeys[Math.floor(Math.random() * oddsKeys.length)];
-      const currentVal = (updatedOdds as any)[randomKey];
-      if (currentVal !== undefined && typeof currentVal === 'number') {
-        const delta = (Math.random() > 0.5 ? 0.08 : -0.08); // +0.08 or -0.08
-        const newVal = Math.max(1.05, Number((currentVal + delta).toFixed(2)));
-        updatedOdds = {
-          ...updatedOdds,
-          [randomKey]: newVal
-        };
-      }
+  // Realistic minor live odds fluctuations for active live betting markets
+  if (Math.random() < 0.35 && updatedOdds) {
+    const oddsKeys = ['ms1', 'msX', 'ms2', 'over25', 'under25', 'overTotalPoints'] as const;
+    const randomKey = oddsKeys[Math.floor(Math.random() * oddsKeys.length)];
+    const currentVal = (updatedOdds as any)[randomKey];
+    if (currentVal !== undefined && typeof currentVal === 'number') {
+      const delta = (Math.random() > 0.5 ? 0.05 : -0.05);
+      const newVal = Math.max(1.05, Number((currentVal + delta).toFixed(2)));
+      updatedOdds = {
+        ...updatedOdds,
+        [randomKey]: newVal
+      };
     }
   }
 

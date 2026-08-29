@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Archive, 
   Search, 
@@ -9,11 +9,12 @@ import {
   ChevronRight,
   Layers,
   Sparkles,
-  BarChart3
+  BarChart3,
+  RotateCw
 } from 'lucide-react';
-import { MOCK_ARCHIVE_MATCHES } from '../data/mockData';
 import { Match } from '../types/betting';
 import { TeamLogo } from './TeamLogo';
+import { fetchLiveMatchesFromWeb } from '../services/liveFootballService';
 
 interface MatchArchiveProps {
   onSelectMatch?: (match: Match) => void;
@@ -22,9 +23,38 @@ interface MatchArchiveProps {
 export const MatchArchive: React.FC<MatchArchiveProps> = ({ onSelectMatch }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLeague, setSelectedLeague] = useState<string>('ALL');
+  const [archiveMatches, setArchiveMatches] = useState<Match[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    const loadArchiveData = async () => {
+      setIsLoading(true);
+      try {
+        const res = await fetchLiveMatchesFromWeb('all', 'yesterday', undefined, 'ALL', 'ALL', undefined, true);
+        if (res.matches && res.matches.length > 0) {
+          setArchiveMatches(res.matches.filter(m => m.status === 'FINISHED' || m.homeScore !== undefined));
+        }
+      } catch (err) {
+        console.warn('Archive fetch error:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadArchiveData();
+  }, []);
+
+  const leagues = useMemo(() => {
+    const map = new Map<string, { id: string; name: string }>();
+    archiveMatches.forEach(m => {
+      if (m.leagueId && !map.has(m.leagueId)) {
+        map.set(m.leagueId, { id: m.leagueId, name: m.leagueName });
+      }
+    });
+    return Array.from(map.values());
+  }, [archiveMatches]);
 
   const filteredArchive = useMemo(() => {
-    return MOCK_ARCHIVE_MATCHES.filter(m => {
+    return archiveMatches.filter(m => {
       if (selectedLeague !== 'ALL' && m.leagueId !== selectedLeague) {
         return false;
       }
@@ -37,7 +67,7 @@ export const MatchArchive: React.FC<MatchArchiveProps> = ({ onSelectMatch }) => 
       }
       return true;
     });
-  }, [searchQuery, selectedLeague]);
+  }, [archiveMatches, searchQuery, selectedLeague]);
 
   return (
     <div className="space-y-4 font-mono">
@@ -49,76 +79,99 @@ export const MatchArchive: React.FC<MatchArchiveProps> = ({ onSelectMatch }) => 
           </div>
           <div>
             <h2 className="text-sm font-bold text-white uppercase tracking-wider">
-              Geçmiş Karşılaşmalar & H2H Arşivi
+              Geçmiş Karşılaşmalar & Canlı Skor Arşivi
             </h2>
             <p className="text-[11px] text-gray-400 font-sans">
-              Tamamlanmış maç sonuçları, kapanış oranları ve gol istatistikleri
+              Resmi tamamlanmış maç skorları, istatistikler ve kapanış oranları
             </p>
           </div>
         </div>
 
-        {/* Search Input */}
-        <div className="relative w-full sm:w-64">
-          <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-2.5" />
-          <input
-            type="text"
-            placeholder="Takım veya lig ara..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            className="w-full bg-[#161B22] border border-[#30363D] rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-green-500 font-mono"
-          />
+        {/* Search & League Controls */}
+        <div className="flex items-center gap-2">
+          {leagues.length > 0 && (
+            <select
+              value={selectedLeague}
+              onChange={e => setSelectedLeague(e.target.value)}
+              className="bg-[#161B22] border border-[#30363D] text-gray-300 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-green-500"
+            >
+              <option value="ALL">Tüm Ligler</option>
+              {leagues.map(l => (
+                <option key={l.id} value={l.id}>{l.name}</option>
+              ))}
+            </select>
+          )}
+
+          <div className="relative w-full sm:w-56">
+            <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-2.5" />
+            <input
+              type="text"
+              placeholder="Takım veya lig ara..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="w-full bg-[#161B22] border border-[#30363D] rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-green-500 font-mono"
+            />
+          </div>
         </div>
       </div>
 
       {/* Archive Match List */}
-      <div className="space-y-2.5">
-        {filteredArchive.map(match => (
-          <div
-            key={match.id}
-            className="bg-[#0F1115] border border-[#1F2937] rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-gray-600 transition-colors shadow-sm"
-          >
-            {/* Match info */}
-            <div className="flex items-center gap-3">
-              <TeamLogo 
-                logo={match.leagueLogo} 
-                fallback={match.sport === 'BASKETBALL' ? '🏀' : (match.sport === 'VOLLEYBALL' ? '🏐' : '⚽')} 
-                className="w-6 h-6 shrink-0" 
-                alt={match.leagueName} 
-              />
-              <div>
-                <div className="flex items-center gap-2 text-[10px] text-gray-400">
-                  <span className="font-bold text-gray-300">{match.leagueName}</span>
-                  <span>• {match.date}</span>
+      {isLoading ? (
+        <div className="bg-[#0F1115] border border-[#1F2937] rounded-xl p-8 text-center text-gray-400 text-xs flex items-center justify-center gap-2">
+          <RotateCw className="w-4 h-4 text-green-400 animate-spin" />
+          <span>Resmi maç arşivi ve sonuçlar yükleniyor...</span>
+        </div>
+      ) : filteredArchive.length === 0 ? (
+        <div className="bg-[#0F1115] border border-[#1F2937] rounded-xl p-8 text-center text-gray-400 text-xs">
+          Henüz arşivlenmiş maç kaydı bulunamadı.
+        </div>
+      ) : (
+        <div className="space-y-2.5">
+          {filteredArchive.map(match => (
+            <div
+              key={match.id}
+              onClick={() => onSelectMatch && onSelectMatch(match)}
+              className="bg-[#0F1115] border border-[#1F2937] rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-green-500/40 transition-colors shadow-sm cursor-pointer"
+            >
+              {/* Match info */}
+              <div className="flex items-center gap-3">
+                <TeamLogo 
+                  logo={match.leagueLogo} 
+                  fallback={match.sport === 'BASKETBALL' ? '🏀' : (match.sport === 'VOLLEYBALL' ? '🏐' : '⚽')} 
+                  className="w-6 h-6 shrink-0" 
+                  alt={match.leagueName} 
+                />
+                <div>
+                  <div className="flex items-center gap-2 text-[10px] text-gray-400">
+                    <span className="font-bold text-gray-300">{match.leagueName}</span>
+                    <span>• {match.date} {match.time}</span>
+                    <span className="px-1.5 py-0.2 rounded bg-gray-800 text-gray-300 text-[9px] font-bold">MS</span>
+                  </div>
+                  <h4 className="font-bold text-white text-sm mt-0.5">
+                    {match.homeTeam.name} <span className="text-green-400 font-mono font-black mx-1">{match.homeScore ?? 0} - {match.awayScore ?? 0}</span> {match.awayTeam.name}
+                  </h4>
                 </div>
-                <h4 className="font-bold text-white text-sm mt-0.5">
-                  {match.homeTeam.name} <span className="text-green-400 font-mono font-black mx-1">{match.homeScore} - {match.awayScore}</span> {match.awayTeam.name}
-                </h4>
-                {match.halftimeScore && (
-                  <span className="text-[10px] text-gray-500 font-mono">
-                    (İY: {match.halftimeScore})
-                  </span>
-                )}
               </div>
-            </div>
 
-            {/* Closing Odds Snapshot */}
-            <div className="flex items-center gap-2 text-xs">
-              <div className="bg-[#161B22] px-2.5 py-1 rounded border border-[#30363D] text-center">
-                <span className="text-[9px] text-gray-400 block">MS 1</span>
-                <span className="font-bold text-white font-mono">{match.odds?.ms1 || 1.85}</span>
-              </div>
-              <div className="bg-[#161B22] px-2.5 py-1 rounded border border-[#30363D] text-center">
-                <span className="text-[9px] text-gray-400 block">MS X</span>
-                <span className="font-bold text-white font-mono">{match.odds?.msX || 3.30}</span>
-              </div>
-              <div className="bg-[#161B22] px-2.5 py-1 rounded border border-[#30363D] text-center">
-                <span className="text-[9px] text-gray-400 block">MS 2</span>
-                <span className="font-bold text-white font-mono">{match.odds?.ms2 || 1.95}</span>
+              {/* Closing Odds Snapshot */}
+              <div className="flex items-center gap-2 text-xs">
+                <div className="bg-[#161B22] px-2.5 py-1 rounded border border-[#30363D] text-center">
+                  <span className="text-[9px] text-gray-400 block">MS 1</span>
+                  <span className="font-bold text-white font-mono">{match.odds?.ms1 || 1.85}</span>
+                </div>
+                <div className="bg-[#161B22] px-2.5 py-1 rounded border border-[#30363D] text-center">
+                  <span className="text-[9px] text-gray-400 block">MS X</span>
+                  <span className="font-bold text-white font-mono">{match.odds?.msX || 3.30}</span>
+                </div>
+                <div className="bg-[#161B22] px-2.5 py-1 rounded border border-[#30363D] text-center">
+                  <span className="text-[9px] text-gray-400 block">MS 2</span>
+                  <span className="font-bold text-white font-mono">{match.odds?.ms2 || 1.95}</span>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
