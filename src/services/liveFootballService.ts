@@ -1,5 +1,4 @@
 import { Match, H2HRecord, ApiProviderType, SportType } from '../types/betting';
-import { MOCK_FIXTURES } from '../data/mockData';
 import { normalizeMatchTiming, parseClockStringToMinute } from '../utils/dateUtils';
 
 export interface LiveFeedResponse {
@@ -32,58 +31,8 @@ export interface H2HResponse {
 }
 
 export function mergeLiveWithMasterFixtures(liveMatches: Match[]): Match[] {
-  if (!liveMatches || liveMatches.length === 0) {
-    return MOCK_FIXTURES;
-  }
-
-  const clean = (str: string) => (str || '').toLowerCase().replace(/[^a-z0-9]/gi, '').trim();
-
-  const matchedLiveIds = new Set<string>();
-
-  const merged = MOCK_FIXTURES.map(master => {
-    const masterHome = clean(master.homeTeam.name);
-    const masterAway = clean(master.awayTeam.name);
-
-    if (!masterHome || !masterAway) return master;
-
-    const liveMatch = liveMatches.find(lm => {
-      const liveHome = clean(lm.homeTeam.name);
-      const liveAway = clean(lm.awayTeam.name);
-
-      if (!liveHome || !liveAway) return false;
-
-      const homeMatch = liveHome.includes(masterHome.substring(0, 4)) || masterHome.includes(liveHome.substring(0, 4));
-      const awayMatch = liveAway.includes(masterAway.substring(0, 4)) || masterAway.includes(liveAway.substring(0, 4));
-
-      return homeMatch && awayMatch;
-    });
-
-    if (liveMatch) {
-      matchedLiveIds.add(liveMatch.id);
-      return {
-        ...master,
-        status: liveMatch.status,
-        minute: liveMatch.minute ?? master.minute,
-        homeScore: liveMatch.homeScore !== undefined ? liveMatch.homeScore : master.homeScore,
-        awayScore: liveMatch.awayScore !== undefined ? liveMatch.awayScore : master.awayScore,
-        halftimeScore: liveMatch.halftimeScore || master.halftimeScore,
-        odds: { ...master.odds, ...liveMatch.odds },
-        stats: liveMatch.stats || master.stats,
-        hasLiveBet: true
-      };
-    }
-
-    return master;
-  });
-
-  // Append any extra live matches that weren't part of master fixtures
-  liveMatches.forEach(lm => {
-    if (!matchedLiveIds.has(lm.id)) {
-      merged.push(lm);
-    }
-  });
-
-  return merged;
+  // Return liveMatches as-is without injecting mock/virtual fixtures
+  return liveMatches || [];
 }
 
 /**
@@ -210,47 +159,48 @@ export async function fetchLiveMatchesFromWeb(
         stats: m.stats
       }));
 
-      const mergedMatches = mergeLiveWithMasterFixtures(formattedMatches);
       return {
-        matches: mergedMatches.map(normalizeMatchTiming),
+        matches: formattedMatches.map(normalizeMatchTiming),
         sources: data.sources && data.sources.length > 0 ? data.sources : [
           { title: 'ESPN Scoreboards Global Data', uri: 'https://site.api.espn.com' },
-          { title: 'TheSportsDB Multi-Sport Live', uri: 'https://www.thesportsdb.com' },
-          { title: 'Football-Data.org Resmi Fikstür', uri: 'https://www.football-data.org' }
+          { title: 'TheSportsDB Multi-Sport Live', uri: 'https://www.thesportsdb.com' }
         ],
         timestamp: data.timestamp || new Date().toISOString(),
-        sourceCount: mergedMatches.length
+        sourceCount: formattedMatches.length
       };
     }
 
-    const fallback = mergeLiveWithMasterFixtures([]);
+    // Try direct client fetch if server response has no matches array
+    const clientMatches = await fetchDirectClientSideMatches(date, sport);
     return {
-      matches: fallback.map(normalizeMatchTiming),
-      sources: data.sources || [{ title: 'BETPROGOL Resmi Fikstür Veritabanı', uri: 'https://betprogol.local' }],
+      matches: clientMatches.map(normalizeMatchTiming),
+      sources: [
+        { title: 'ESPN Global Live Scoreboard', uri: 'https://site.api.espn.com' },
+        { title: 'TheSportsDB Multi-Sport Live Data', uri: 'https://www.thesportsdb.com' }
+      ],
       timestamp: new Date().toISOString(),
-      sourceCount: fallback.length
+      sourceCount: clientMatches.length
     };
   } catch (err) {
     console.warn('Backend API proxy error, falling back to direct client scoreboard fetch:', err);
     try {
       const clientMatches = await fetchDirectClientSideMatches(date, sport);
-      const matchesToReturn = mergeLiveWithMasterFixtures(clientMatches);
       return {
-        matches: matchesToReturn.map(normalizeMatchTiming),
+        matches: clientMatches.map(normalizeMatchTiming),
         sources: [
           { title: 'ESPN Global Live Scoreboard', uri: 'https://site.api.espn.com' },
           { title: 'TheSportsDB Multi-Sport Live Data', uri: 'https://www.thesportsdb.com' }
         ],
         timestamp: new Date().toISOString(),
-        sourceCount: matchesToReturn.length
+        sourceCount: clientMatches.length
       };
     } catch (clientErr) {
-      console.error('Direct client fetch error, using local database:', clientErr);
+      console.error('Direct client fetch error:', clientErr);
       return {
-        matches: MOCK_FIXTURES.map(normalizeMatchTiming),
-        sources: [{ title: 'BETPROGOL Resmi Fikstür Veritabanı', uri: 'https://betprogol.local' }],
+        matches: [],
+        sources: [{ title: 'Canlı Fikstür Sunucusu', uri: 'https://site.api.espn.com' }],
         timestamp: new Date().toISOString(),
-        sourceCount: MOCK_FIXTURES.length
+        sourceCount: 0
       };
     }
   }
@@ -331,7 +281,8 @@ async function fetchDirectClientSideMatches(date?: string, sport?: string): Prom
     { code: 'por.1', leagueId: 'por.1', leagueName: 'Liga Portugal', country: 'Portekiz', logo: '🇵🇹', isTurk: false },
     { code: 'ned.1', leagueId: 'ned.1', leagueName: 'Eredivisie', country: 'Hollanda', logo: '🇳🇱', isTurk: false },
     { code: 'uefa.champions', leagueId: 'uefa-cl', leagueName: 'UEFA Şampiyonlar Ligi', country: 'Avrupa', logo: '🏆', isTurk: false },
-    { code: 'uefa.europa', leagueId: 'uefa-el', leagueName: 'UEFA Avrupa Ligi', country: 'Avrupa', logo: '⚽', isTurk: false }
+    { code: 'uefa.europa', leagueId: 'uefa-el', leagueName: 'UEFA Avrupa Ligi', country: 'Avrupa', logo: '⚽', isTurk: false },
+    { code: 'all', leagueId: 'global-soccer', leagueName: 'Dünya Ligleri', country: 'Uluslararası', logo: '🌐', isTurk: false }
   ];
 
   // 1. Fetch ESPN endpoints in parallel with anti-cache headers

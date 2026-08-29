@@ -90,9 +90,6 @@ import {
   evaluateAllSlips, 
   simulateMatchStep 
 } from './utils/betEvaluator';
-import { 
-  MOCK_FIXTURES 
-} from './data/mockData';
 import {
   normalizeMatchTiming
 } from './utils/dateUtils';
@@ -118,9 +115,9 @@ export default function App() {
   const [activeSelections, setActiveSelections] = useState<BetSlipSelection[]>([]);
 
   // 3. Live Matches & Fixtures State (Always normalized to current TSİ time)
-  const [matches, setMatches] = useState<Match[]>(() => MOCK_FIXTURES.map(normalizeMatchTiming));
+  const [matches, setMatches] = useState<Match[]>([]);
 
-  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [isSyncing, setIsSyncing] = useState<boolean>(true);
 
   // 4. Notifications State
   const [notifications, setNotifications] = useState<AppNotification[]>(() => loadSavedNotifications());
@@ -185,8 +182,9 @@ export default function App() {
     const dateToQuery = customDate || selectedDate;
     try {
       const res = await fetchLiveMatchesFromWeb('all', dateToQuery, undefined, 'ALL', selectedSport, undefined, forceRefresh);
-      if (res.matches && Array.isArray(res.matches) && res.matches.length > 0) {
+      if (res.matches && Array.isArray(res.matches)) {
         setMatches(prevMatches => {
+          if (res.matches.length === 0) return [];
           const prevMap = new Map<string, Match>(prevMatches.map(m => [m.id, m]));
           return res.matches.map(newMatch => {
             const existing = prevMap.get(newMatch.id);

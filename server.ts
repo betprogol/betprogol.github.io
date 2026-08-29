@@ -444,7 +444,8 @@ Kullanıcıya Türkçe, net, profesyonel, veri odaklı ve samimi bir dille cevap
         { code: 'uefa.europa.conf', leagueId: 'uefa-ecl', leagueName: 'UEFA Konferans Ligi', country: 'Avrupa', logo: '🏆', tv: 'TRT Spor Yıldız' },
         { code: 'sau.1', leagueId: 'sau-pro', leagueName: 'Suudi Pro Lig', country: 'Suudi Arabistan', logo: '🇸🇦', tv: 'TV8.5' },
         { code: 'bra.1', leagueId: 'bra-seriea', leagueName: 'Brezilya Serie A', country: 'Brezilya', logo: '🇧🇷', tv: 'Spor Smart' },
-        { code: 'arg.1', leagueId: 'arg-primera', leagueName: 'Arjantin Primera', country: 'Arjantin', logo: '🇦🇷', tv: 'Spor Smart' }
+        { code: 'arg.1', leagueId: 'arg-primera', leagueName: 'Arjantin Primera', country: 'Arjantin', logo: '🇦🇷', tv: 'Spor Smart' },
+        { code: 'all', leagueId: 'global-soccer', leagueName: 'Dünya Ligleri & Uluslararası', country: 'Uluslararası', logo: '🌐', tv: 'Canlı Yayın / Spor TV' }
       ];
 
       const BASKET_LEAGUES = [
