@@ -175,7 +175,21 @@ export function getCurrentUser(): UserProfile {
       localStorage.setItem(AUTH_CURRENT_USER_KEY, JSON.stringify(profile));
       return profile;
     }
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    const defaultUser = DEMO_ACCOUNTS[0];
+    return {
+      ...defaultUser,
+      ...parsed,
+      bankroll: typeof parsed.bankroll === 'number' ? parsed.bankroll : 4250,
+      totalWinnings: typeof parsed.totalWinnings === 'number' ? parsed.totalWinnings : 0,
+      totalBetsPlaced: typeof parsed.totalBetsPlaced === 'number' ? parsed.totalBetsPlaced : 0,
+      favoriteTeams: Array.isArray(parsed.favoriteTeams) ? parsed.favoriteTeams : ['Galatasaray', 'Real Madrid'],
+      favoriteLeagues: Array.isArray(parsed.favoriteLeagues) ? parsed.favoriteLeagues : ['tr-superlig', 'eng-premier', 'uefa-cl'],
+      preferences: {
+        ...DEFAULT_USER_PREFERENCES,
+        ...(parsed.preferences || {})
+      }
+    };
   } catch {
     return DEMO_ACCOUNTS[0];
   }

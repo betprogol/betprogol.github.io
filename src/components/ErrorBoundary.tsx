@@ -11,8 +11,7 @@ interface State {
 }
 
 export class ErrorBoundary extends Component<Props, State> {
-  // Explicitly declare state and props types for React 19 TS compatibility
-  public state: State = {
+  override state: State = {
     hasError: false,
     error: null
   };
@@ -21,7 +20,7 @@ export class ErrorBoundary extends Component<Props, State> {
     return { hasError: true, error };
   }
 
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('Uncaught error in BetProGol:', error, errorInfo);
   }
 
@@ -30,11 +29,15 @@ export class ErrorBoundary extends Component<Props, State> {
   };
 
   private handleResetStorage = () => {
-    localStorage.clear();
+    try {
+      localStorage.clear();
+    } catch {
+      // ignore
+    }
     window.location.reload();
   };
 
-  public render(): ReactNode {
+  override render(): ReactNode {
     if (this.state.hasError) {
       return (
         <div className="min-h-screen bg-[#0D1117] text-white flex items-center justify-center p-4 font-sans">
@@ -57,14 +60,14 @@ export class ErrorBoundary extends Component<Props, State> {
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <button
                 onClick={this.handleReload}
-                className="flex-1 py-2.5 px-4 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-lg flex items-center justify-center gap-2 transition"
+                className="flex-1 py-2.5 px-4 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-lg flex items-center justify-center gap-2 transition cursor-pointer"
               >
                 <RefreshCw className="w-4 h-4" />
                 Sayfayı Yenile
               </button>
               <button
                 onClick={this.handleResetStorage}
-                className="flex-1 py-2.5 px-4 bg-[#21262D] hover:bg-[#30363D] text-gray-300 font-semibold rounded-lg transition"
+                className="flex-1 py-2.5 px-4 bg-[#21262D] hover:bg-[#30363D] text-gray-300 font-semibold rounded-lg transition cursor-pointer"
               >
                 Önbelleği Sıfırla
               </button>
@@ -74,6 +77,6 @@ export class ErrorBoundary extends Component<Props, State> {
       );
     }
 
-    return (this as any).props.children;
+    return (this.props as Props).children;
   }
 }

@@ -222,8 +222,8 @@ export const LivePitchTracker: React.FC<LivePitchTrackerProps> = ({
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const isLive = match.status === 'LIVE' || match.status === 'IN_PLAY' || match.status === 'PAUSED' || match.status === 'HALF_TIME';
-  const isFinished = match.status === 'FINISHED' || match.status === 'POST' || match.status === 'COMPLETED';
+  const isLive = match.status === 'LIVE' || match.status === 'HALFTIME' || (match.status as string) === 'IN_PLAY' || (match.status as string) === 'PAUSED' || (match.status as string) === 'HALF_TIME';
+  const isFinished = match.status === 'FINISHED' || (match.status as string) === 'POST' || (match.status as string) === 'COMPLETED';
   const isNotStarted = !isLive && !isFinished;
   const isBasketball = match.sport === 'BASKETBALL';
   const isVolleyball = match.sport === 'VOLLEYBALL';

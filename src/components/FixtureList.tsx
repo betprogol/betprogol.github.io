@@ -169,10 +169,10 @@ export const FixtureList: React.FC<FixtureListProps> = ({
       // Search Query
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
-        const homeMatch = match.homeTeam.name.toLowerCase().includes(q);
-        const awayMatch = match.awayTeam.name.toLowerCase().includes(q);
-        const leagueMatch = match.leagueName.toLowerCase().includes(q);
-        const codeMatch = match.matchCode.includes(q);
+        const homeMatch = (match.homeTeam?.name || '').toLowerCase().includes(q);
+        const awayMatch = (match.awayTeam?.name || '').toLowerCase().includes(q);
+        const leagueMatch = (match.leagueName || '').toLowerCase().includes(q);
+        const codeMatch = (match.matchCode || '').includes(q);
         if (!homeMatch && !awayMatch && !leagueMatch && !codeMatch) {
           return false;
         }
@@ -194,8 +194,8 @@ export const FixtureList: React.FC<FixtureListProps> = ({
 
     onAddSelection({
       matchId: match.id,
-      homeTeam: match.homeTeam.name,
-      awayTeam: match.awayTeam.name,
+      homeTeam: match.homeTeam?.name || 'Ev Sahibi',
+      awayTeam: match.awayTeam?.name || 'Deplasman',
       matchDate: match.date,
       matchTime: match.time,
       leagueName: match.leagueName,

@@ -92,43 +92,57 @@ export const Header: React.FC<HeaderProps> = ({
 
         <div className="flex items-center gap-2 sm:gap-3 text-[11px] overflow-x-auto no-scrollbar whitespace-nowrap pl-2 sm:pl-4 font-mono max-w-full">
           {liveMatches.length > 0 ? (
-            liveMatches.slice(0, 5).map(m => (
-              <span 
-                key={m.id}
-                onClick={() => setActiveTab('fixtures')}
-                className="bg-[#161B22] border border-green-500/50 hover:border-green-400 px-2 py-0.5 rounded text-gray-200 flex items-center gap-1.5 cursor-pointer transition-colors shadow-sm"
-                title={`${m.leagueName}: ${m.homeTeam.name} vs ${m.awayTeam.name}`}
-              >
-                <span className="text-green-400 font-bold">
-                  {m.sport === 'BASKETBALL' ? '🏀' : m.sport === 'VOLLEYBALL' ? '🏐' : m.sport === 'TENNIS' ? '🎾' : '⚽'}{' '}
-                  {m.homeTeam.shortName || m.homeTeam.name.substring(0, 3).toUpperCase()} {m.homeScore ?? 0}-{m.awayScore ?? 0} {m.awayTeam.shortName || m.awayTeam.name.substring(0, 3).toUpperCase()}
+            liveMatches.slice(0, 5).map(m => {
+              const homeName = m.homeTeam?.name || 'Ev Sahibi';
+              const awayName = m.awayTeam?.name || 'Deplasman';
+              const homeShort = m.homeTeam?.shortName || homeName.substring(0, 3).toUpperCase();
+              const awayShort = m.awayTeam?.shortName || awayName.substring(0, 3).toUpperCase();
+              return (
+                <span 
+                  key={m.id}
+                  onClick={() => setActiveTab('fixtures')}
+                  className="bg-[#161B22] border border-green-500/50 hover:border-green-400 px-2 py-0.5 rounded text-gray-200 flex items-center gap-1.5 cursor-pointer transition-colors shadow-sm"
+                  title={`${m.leagueName || 'Lig'}: ${homeName} vs ${awayName}`}
+                >
+                  <span className="text-green-400 font-bold">
+                    {m.sport === 'BASKETBALL' ? '🏀' : m.sport === 'VOLLEYBALL' ? '🏐' : m.sport === 'TENNIS' ? '🎾' : '⚽'}{' '}
+                    {homeShort} {m.homeScore ?? 0}-{m.awayScore ?? 0} {awayShort}
+                  </span>
+                  <span className="text-emerald-400 font-medium bg-green-950/60 px-1 rounded text-[10px]">({m.minute ? `${m.minute}'` : 'Canlı'})</span>
                 </span>
-                <span className="text-emerald-400 font-medium bg-green-950/60 px-1 rounded text-[10px]">({m.minute ? `${m.minute}'` : 'Canlı'})</span>
-              </span>
-            ))
+              );
+            })
           ) : upcomingTodayMatches.length > 0 ? (
-            upcomingTodayMatches.slice(0, 4).map(m => (
-              <span 
-                key={m.id}
-                onClick={() => setActiveTab('fixtures')}
-                className="bg-[#161B22] border border-[#30363D] hover:border-gray-500 px-2 py-0.5 rounded text-gray-300 flex items-center gap-1.5 cursor-pointer transition-colors"
-              >
-                <span className="text-gray-400">🕒 {m.time || 'Bugün'}:</span>
-                <span className="text-white font-semibold">{m.homeTeam.name} - {m.awayTeam.name}</span>
-                <span className="text-green-400 font-bold bg-[#0D1117] px-1 rounded text-[10px]">MS1: {m.odds?.ms1 || 1.80}</span>
-              </span>
-            ))
+            upcomingTodayMatches.slice(0, 4).map(m => {
+              const homeName = m.homeTeam?.name || 'Ev Sahibi';
+              const awayName = m.awayTeam?.name || 'Deplasman';
+              return (
+                <span 
+                  key={m.id}
+                  onClick={() => setActiveTab('fixtures')}
+                  className="bg-[#161B22] border border-[#30363D] hover:border-gray-500 px-2 py-0.5 rounded text-gray-300 flex items-center gap-1.5 cursor-pointer transition-colors"
+                >
+                  <span className="text-gray-400">🕒 {m.time || 'Bugün'}:</span>
+                  <span className="text-white font-semibold">{homeName} - {awayName}</span>
+                  <span className="text-green-400 font-bold bg-[#0D1117] px-1 rounded text-[10px]">MS1: {m.odds?.ms1 || 1.80}</span>
+                </span>
+              );
+            })
           ) : otherUpcomingMatches.length > 0 ? (
-            otherUpcomingMatches.slice(0, 3).map(m => (
-              <span 
-                key={m.id}
-                onClick={() => setActiveTab('fixtures')}
-                className="bg-[#161B22] border border-[#30363D] hover:border-gray-500 px-2 py-0.5 rounded text-gray-300 flex items-center gap-1.5 cursor-pointer"
-              >
-                <span className="text-gray-400">🕒 {m.time || '20:00'}:</span>
-                <span className="text-white font-semibold">{m.homeTeam.name} - {m.awayTeam.name}</span>
-              </span>
-            ))
+            otherUpcomingMatches.slice(0, 3).map(m => {
+              const homeName = m.homeTeam?.name || 'Ev Sahibi';
+              const awayName = m.awayTeam?.name || 'Deplasman';
+              return (
+                <span 
+                  key={m.id}
+                  onClick={() => setActiveTab('fixtures')}
+                  className="bg-[#161B22] border border-[#30363D] hover:border-gray-500 px-2 py-0.5 rounded text-gray-300 flex items-center gap-1.5 cursor-pointer"
+                >
+                  <span className="text-gray-400">🕒 {m.time || '20:00'}:</span>
+                  <span className="text-white font-semibold">{homeName} - {awayName}</span>
+                </span>
+              );
+            })
           ) : (
             <span className="text-gray-400 flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-ping"></span>
@@ -141,7 +155,7 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={() => setActiveTab('fixtures')}
               className="hidden md:inline bg-emerald-950/40 border border-emerald-500/40 px-2 py-0.5 rounded text-emerald-300 cursor-pointer"
             >
-              👑 AI Seçimi: <strong className="text-white">{valueMatches[0].homeTeam.name}</strong> (Oran: {valueMatches[0].odds?.ms1 || 1.85})
+              👑 AI Seçimi: <strong className="text-white">{valueMatches[0].homeTeam?.name || 'Maç'}</strong> (Oran: {valueMatches[0].odds?.ms1 || 1.85})
             </span>
           )}
         </div>
@@ -186,14 +200,14 @@ export const Header: React.FC<HeaderProps> = ({
             className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-md bg-[#161B22] border border-[#30363D] hover:border-green-500/60 text-white text-xs font-semibold shadow-sm transition-all hover:bg-[#1F2937] group shrink-0"
             title="Üyelik & Profil Ayarları"
           >
-            <span className="text-sm">{currentUser.avatar}</span>
+            <span className="text-sm">{currentUser?.avatar || '👤'}</span>
             <div className="text-left hidden sm:block leading-none">
               <div className="flex items-center gap-1">
                 <span className="text-xs font-bold text-white group-hover:text-green-400 transition-colors">
-                  {currentUser.fullName.split(' ')[0]}
+                  {(currentUser?.fullName || currentUser?.username || 'Üye').split(' ')[0]}
                 </span>
                 <span className="text-[9px] px-1 py-0.2 rounded bg-green-500/20 text-green-400 font-mono font-bold">
-                  {currentUser.tier}
+                  {currentUser?.tier || 'PRO'}
                 </span>
               </div>
               <span className="text-[9px] text-gray-400 font-mono block mt-0.5">

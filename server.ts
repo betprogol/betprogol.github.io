@@ -373,13 +373,18 @@ Kullanıcıya Türkçe, net, profesyonel, veri odaklı ve samimi bir dille cevap
     };
   }
 
-  app.post('/api/fetch-live-matches', async (req, res) => {
+  const handleLiveMatches = async (req: any, res: any) => {
     // Prevent browser disk caching
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
 
-    const { league, date, sport, forceRefresh } = req.body || {};
+    const body = req.body || {};
+    const query = req.query || {};
+    const league = body.league || query.league;
+    const date = body.date || query.date;
+    const sport = body.sport || query.sport;
+    const forceRefresh = body.forceRefresh === true || query.forceRefresh === 'true';
     const now = Date.now();
 
     // Determine target date string in Istanbul timezone (YYYYMMDD for ESPN API, YYYY-MM-DD for UI)
@@ -819,7 +824,12 @@ Kullanıcıya Türkçe, net, profesyonel, veri odaklı ve samimi bir dille cevap
       console.error('Fetch live matches error:', err);
       return res.status(500).json({ error: err.message, matches: [] });
     }
-  });
+  };
+
+  app.post('/api/fetch-live-matches', handleLiveMatches);
+  app.get('/api/fetch-live-matches', handleLiveMatches);
+  app.post('/api/matches', handleLiveMatches);
+  app.get('/api/matches', handleLiveMatches);
 
   // Vite middleware for development vs Production Static serving
   if (process.env.NODE_ENV !== 'production') {
