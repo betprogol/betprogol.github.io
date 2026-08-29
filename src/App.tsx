@@ -102,7 +102,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<string>('fixtures');
   const [selectedSport, setSelectedSport] = useState<SportType | 'ALL'>('ALL');
   const [selectedDate, setSelectedDate] = useState<string>('today');
-  const [selectedProvider, setSelectedProvider] = useState<ApiProviderType>('LIVESCORE_FULL');
+  const [selectedProvider, setSelectedProvider] = useState<ApiProviderType>('SOFASCORE_LIVE');
   const [darkMode, setDarkMode] = useState<boolean>(true);
   const [isMobileFrame, setIsMobileFrame] = useState<boolean>(false);
 
@@ -117,10 +117,10 @@ export default function App() {
   });
   const [activeSelections, setActiveSelections] = useState<BetSlipSelection[]>([]);
 
-  // 3. Live Matches & Fixtures State (Initialized with full master database)
-  const [matches, setMatches] = useState<Match[]>(() => FULL_COMPREHENSIVE_FIXTURES.map(normalizeMatchTiming));
+  // 3. Live Matches & Fixtures State (Fetched dynamically from live API sources)
+  const [matches, setMatches] = useState<Match[]>([]);
 
-  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [isSyncing, setIsSyncing] = useState<boolean>(true);
 
   // 4. Notifications State
   const [notifications, setNotifications] = useState<AppNotification[]>(() => loadSavedNotifications());
@@ -185,11 +185,10 @@ export default function App() {
     const dateToQuery = customDate || selectedDate;
     try {
       const res = await fetchLiveMatchesFromWeb('all', dateToQuery, undefined, selectedProvider, selectedSport, undefined, forceRefresh);
-      if (res.matches && Array.isArray(res.matches)) {
+      if (res.matches && Array.isArray(res.matches) && res.matches.length > 0) {
         setMatches(prevMatches => {
-          if (res.matches.length === 0 && selectedProvider === 'ESPN') return [];
           const prevMap = new Map<string, Match>(prevMatches.map(m => [m.id, m]));
-          return res.matches.map(newMatch => {
+          const normalizedList = res.matches.map(newMatch => {
             const existing = prevMap.get(newMatch.id);
             const normalized = normalizeMatchTiming(newMatch);
             if (existing && existing.status === 'LIVE' && normalized.status === 'LIVE') {
@@ -202,6 +201,15 @@ export default function App() {
               };
             }
             return normalized;
+          });
+
+          // Sort matches: LIVE matches first, then NOT_STARTED, then FINISHED
+          return normalizedList.sort((a, b) => {
+            if (a.status === 'LIVE' && b.status !== 'LIVE') return -1;
+            if (a.status !== 'LIVE' && b.status === 'LIVE') return 1;
+            if (a.status === 'NOT_STARTED' && b.status === 'FINISHED') return -1;
+            if (a.status === 'FINISHED' && b.status === 'NOT_STARTED') return 1;
+            return (a.time || '').localeCompare(b.time || '');
           });
         });
       }

@@ -32,60 +32,13 @@ export interface H2HResponse {
 }
 
 export function mergeLiveWithMasterFixtures(liveMatches: Match[], mode: ApiProviderType = 'LIVESCORE_FULL'): Match[] {
-  // If strictly live-only mode selected by user (e.g. ESPN or THESPORTSDB), return only active live matches
-  if (mode === 'ESPN' || mode === 'THESPORTSDB') {
-    return liveMatches || [];
+  // Always return the actual real-time matches fetched from Sofascore/ESPN/LiveScore APIs directly
+  if (liveMatches && Array.isArray(liveMatches) && liveMatches.length > 0) {
+    return liveMatches;
   }
 
-  // Default mode (LIVESCORE_FULL, ALL, IDDAA_BILYONER, SIMULATOR):
-  // Merge real-time API score updates into the full 134+ match comprehensive fixtures database
-  const clean = (str: string) => (str || '').toLowerCase().replace(/[^a-z0-9]/gi, '').trim();
-  const matchedLiveIds = new Set<string>();
-
-  const merged = FULL_COMPREHENSIVE_FIXTURES.map(master => {
-    const masterHome = clean(master.homeTeam.name);
-    const masterAway = clean(master.awayTeam.name);
-
-    if (!masterHome || !masterAway) return master;
-
-    const liveMatch = (liveMatches || []).find(lm => {
-      const liveHome = clean(lm.homeTeam.name);
-      const liveAway = clean(lm.awayTeam.name);
-
-      if (!liveHome || !liveAway) return false;
-
-      const homeMatch = liveHome.includes(masterHome.substring(0, 4)) || masterHome.includes(liveHome.substring(0, 4));
-      const awayMatch = liveAway.includes(masterAway.substring(0, 4)) || masterAway.includes(liveAway.substring(0, 4));
-
-      return homeMatch && awayMatch;
-    });
-
-    if (liveMatch) {
-      matchedLiveIds.add(liveMatch.id);
-      return {
-        ...master,
-        status: liveMatch.status,
-        minute: liveMatch.minute ?? master.minute,
-        homeScore: liveMatch.homeScore !== undefined ? liveMatch.homeScore : master.homeScore,
-        awayScore: liveMatch.awayScore !== undefined ? liveMatch.awayScore : master.awayScore,
-        halftimeScore: liveMatch.halftimeScore || master.halftimeScore,
-        odds: { ...master.odds, ...liveMatch.odds },
-        stats: liveMatch.stats || master.stats,
-        hasLiveBet: true
-      };
-    }
-
-    return master;
-  });
-
-  // Append any extra live matches returned by the API that were not in master fixtures
-  (liveMatches || []).forEach(lm => {
-    if (!matchedLiveIds.has(lm.id)) {
-      merged.push(lm);
-    }
-  });
-
-  return merged;
+  // Fallback to full comprehensive fixtures array only if network request returned empty
+  return FULL_COMPREHENSIVE_FIXTURES || [];
 }
 
 /**

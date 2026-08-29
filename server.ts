@@ -460,14 +460,21 @@ Kullanıcıya Türkçe, net, profesyonel, veri odaklı ve samimi bir dille cevap
         { code: 'wnba', leagueId: 'wnba', leagueName: 'WNBA', country: 'ABD', logo: '🏀', tv: 'S Sport Plus' }
       ];
 
-      // Fetch Soccer Scoreboards from ESPN in parallel
+      // Fetch Soccer Scoreboards from ESPN in parallel (including global real-time live feed)
       if (!sport || sport === 'ALL' || sport === 'FOOTBALL') {
-        const soccerPromises = SOCCER_LEAGUES.map(l =>
-          fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/${l.code}/scoreboard?dates=${espnDateParam}`)
+        const liveFeedDef = { code: 'all', leagueId: 'global-live', leagueName: 'Canlı Skor Akışı', country: 'Uluslararası', logo: '🌐', tv: 'beIN / S Sport' };
+        const soccerPromises = [
+          fetch('https://site.api.espn.com/apis/site/v2/sports/soccer/all/scoreboard')
             .then(r => r.ok ? r.json() : null)
-            .then(data => ({ leagueDef: l, data }))
-            .catch(() => ({ leagueDef: l, data: null }))
-        );
+            .then(data => ({ leagueDef: liveFeedDef, data }))
+            .catch(() => ({ leagueDef: liveFeedDef, data: null })),
+          ...SOCCER_LEAGUES.map(l =>
+            fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/${l.code}/scoreboard?dates=${espnDateParam}`)
+              .then(r => r.ok ? r.json() : null)
+              .then(data => ({ leagueDef: l, data }))
+              .catch(() => ({ leagueDef: l, data: null }))
+          )
+        ];
 
         const soccerResults = await Promise.allSettled(soccerPromises);
 
@@ -828,6 +835,15 @@ Kullanıcıya Türkçe, net, profesyonel, veri odaklı ve samimi bir dille cevap
       } catch (sdbErr) {
         console.warn('TheSportsDB fetch warn:', sdbErr);
       }
+
+      // Sort formattedList so LIVE matches are placed at the very top, followed by NOT_STARTED and FINISHED
+      formattedList.sort((a, b) => {
+        if (a.status === 'LIVE' && b.status !== 'LIVE') return -1;
+        if (a.status !== 'LIVE' && b.status === 'LIVE') return 1;
+        if (a.status === 'NOT_STARTED' && b.status === 'FINISHED') return -1;
+        if (a.status === 'FINISHED' && b.status === 'NOT_STARTED') return 1;
+        return (a.time || '').localeCompare(b.time || '');
+      });
 
       // Cache the result
       if (formattedList.length > 0) {

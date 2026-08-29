@@ -360,9 +360,7 @@ export const FixtureList: React.FC<FixtureListProps> = ({
                       ? 'API: TheSportsDB Live'
                       : selectedProvider === 'IDDAA_BILYONER'
                       ? 'API: İddaa / Bilyoner'
-                      : selectedProvider === 'SIMULATOR'
-                      ? 'API: Simülatör'
-                      : 'API: LiveScore & Tam Bülten'}
+                      : 'API: Sofascore & LiveScore Canlı'}
                   </span>
                 </div>
                 <ChevronDown className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
@@ -940,16 +938,16 @@ export const FixtureList: React.FC<FixtureListProps> = ({
 
             {/* Options Body */}
             <div className="p-4 space-y-3 max-h-[70vh] overflow-y-auto font-mono text-xs">
-              {/* Option 1: LIVESCORE_FULL */}
+              {/* Option 1: SOFASCORE_LIVE / LIVESCORE_FULL */}
               <button
                 type="button"
                 onClick={() => {
-                  if (setSelectedProvider) setSelectedProvider('LIVESCORE_FULL');
+                  if (setSelectedProvider) setSelectedProvider('SOFASCORE_LIVE');
                   setIsApiModalOpen(false);
                   if (onManualRefresh) onManualRefresh();
                 }}
                 className={`w-full text-left p-3.5 rounded-xl border transition-all cursor-pointer flex items-start gap-3 ${
-                  selectedProvider === 'LIVESCORE_FULL'
+                  selectedProvider === 'SOFASCORE_LIVE' || selectedProvider === 'LIVESCORE_FULL' || selectedProvider === 'ALL'
                     ? 'bg-cyan-950/40 border-cyan-400 text-white shadow-lg shadow-cyan-950/50'
                     : 'bg-[#0D1117] border-[#30363D] text-gray-300 hover:border-gray-500'
                 }`}
@@ -957,13 +955,13 @@ export const FixtureList: React.FC<FixtureListProps> = ({
                 <div className="text-2xl pt-0.5">🌐</div>
                 <div className="flex-1 space-y-1">
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-cyan-300 text-sm">LiveScore & Tam Fikstür Bülteni</span>
+                    <span className="font-bold text-cyan-300 text-sm">Sofascore & LiveScore Canlı Akış</span>
                     <span className="text-[10px] bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 px-2 py-0.5 rounded-full font-bold">
-                      Tavsiye Edilen (134+ Maç)
+                      Varsayılan Canlı Servis
                     </span>
                   </div>
                   <p className="text-xs text-gray-400 font-sans leading-relaxed">
-                    Trendyol Süper Lig, 1. Lig, Premier League, La Liga, Serie A, EuroLeague, NBA vb. tüm 25+ ligin eksiksiz maç bültenini sunar ve canlı maç skorlarını anlık günceller.
+                    Sofascore.com ve LiveScore canlı veri akışı: Gerçek zamanlı oynanan canlı maçlar, anlık gol/skor değişimleri ve günün tüm resmi maç fikstürü.
                   </p>
                 </div>
               </button>
@@ -987,11 +985,11 @@ export const FixtureList: React.FC<FixtureListProps> = ({
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-amber-300 text-sm">ESPN Scoreboards Live API</span>
                     <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full font-bold">
-                      Yalnızca Anlık Canlı Maçlar
+                      Canlı & Günlük Fikstür
                     </span>
                   </div>
                   <p className="text-xs text-gray-400 font-sans leading-relaxed">
-                    Sadece şu anda sahalarda bilfiil oynanmakta olan resmi canlı futbol ve basketbol skor akışını çeker.
+                    ESPN resmi canlı skor skorboardları: Futbol, basketbol, tenis dahil tüm liglerin güncel canlı ve günlük maç bilgileri.
                   </p>
                 </div>
               </button>
@@ -1048,34 +1046,6 @@ export const FixtureList: React.FC<FixtureListProps> = ({
                   </div>
                   <p className="text-xs text-gray-400 font-sans leading-relaxed">
                     Türkiye İddaa bülteni ile tam uyumlu MBS1, MBS2 ve canlı Kral Oranlar.
-                  </p>
-                </div>
-              </button>
-
-              {/* Option 5: SIMULATOR */}
-              <button
-                type="button"
-                onClick={() => {
-                  if (setSelectedProvider) setSelectedProvider('SIMULATOR');
-                  setIsApiModalOpen(false);
-                  if (onManualRefresh) onManualRefresh();
-                }}
-                className={`w-full text-left p-3.5 rounded-xl border transition-all cursor-pointer flex items-start gap-3 ${
-                  selectedProvider === 'SIMULATOR'
-                    ? 'bg-blue-950/40 border-blue-400 text-white shadow-lg shadow-blue-950/50'
-                    : 'bg-[#0D1117] border-[#30363D] text-gray-300 hover:border-gray-500'
-                }`}
-              >
-                <div className="text-2xl pt-0.5">🤖</div>
-                <div className="flex-1 space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-blue-300 text-sm">Canlı Fikstür Simülatörü</span>
-                    <span className="text-[10px] bg-blue-500/20 text-blue-300 border border-blue-500/40 px-2 py-0.5 rounded-full font-bold">
-                      Test & Dinamik Skor
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-400 font-sans leading-relaxed">
-                    Sürekli dakikası artan, canlı gol ve oran değişimi üreten test modu.
                   </p>
                 </div>
               </button>
